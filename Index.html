@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CV Screening - Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR (diisi dari script.js -> NAV) -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <img class="logo" src="assets/icons/logo.svg" alt="">
+      <b>CV Screening</b>
+      <button class="icon-btn" id="collapseBtn" aria-label="Toggle sidebar"><img class="ico" src="assets/icons/light/sidebar.svg" alt=""></button>
+    </div>
+    <label class="search"><img class="ico" src="assets/icons/light/search.svg" alt=""><input placeholder="Search"><kbd>/</kbd></label>
+    <button class="add-notes"><span class="plus">+</span>Add Notes</button>
+    <nav id="nav"></nav>
+  </aside>
+
+  <main class="main">
+    <!-- HEADER -->
+    <header class="top">
+      <div class="hello">
+        <h1>Hello, <b>Daniel O’Connor</b></h1>
+        <p>Wednesday, <b>November 26 - 09.25 AM</b></p>
+      </div>
+      <div class="profile">
+        <button class="btn-outline sm"><img class="ico" src="assets/icons/light/sparkle.svg" alt="">Ask AI</button>
+        <button class="bell" aria-label="Notifications"><img class="ico" src="assets/icons/bell-white.svg" alt=""></button>
+        <img class="avatar lg" src="assets/img/daniel.jpg" alt="">
+        <div class="who"><b>Daniel O’Connor</b><small>Head of Human Capital</small></div>
+        <img class="ico" src="assets/icons/light/chevron-down.svg" alt="">
+      </div>
+    </header>
+
+    <div class="bar">
+      <div class="crumb"><span>Overview</span> / <b id="crumbTitle">Dashboard</b></div>
+      <div class="tools">
+        <button class="tool sq" id="refreshBtn" aria-label="Refresh"><img class="ico" src="assets/icons/light/refresh.svg" alt=""></button>
+        <button class="tool date"><img class="ico" src="assets/icons/light/calendar.svg" alt="">24 Nov 2026<img class="ico" src="assets/icons/light/chevron-down.svg" alt=""></button>
+        <button class="tool exp"><img class="ico" src="assets/icons/light/export.svg" alt="">Export</button>
+      </div>
+    </div>
+
+    <div class="pages">
+<section class="page active" id="page-dashboard">
+<div class="grid">
+      <!-- KOLOM KIRI -->
+      <section class="card col-left">
+        <div class="head"><h2>All Resume</h2><button class="btn-outline">View All <img class="ico" src="assets/icons/light/arrow-up-right.svg" alt=""></button></div>
+
+        <article class="resume">
+          <div class="resume-side">
+            <img class="avatar" src="assets/img/user-2.jpg" alt="">
+            <span class="pill">99+</span>
+          </div>
+          <div class="resume-body">
+            <div class="r-top">
+              <img class="avatar xl" src="assets/img/christine.jpg" alt="">
+              <div><b>Christine Victoria</b><small>christine.victoria@gmail.com</small></div>
+              <span class="status"><i></i>On Progress</span>
+            </div>
+            <div class="step"><span>Step: interview HR</span><span>2 of 5</span></div>
+            <div class="segs"><i class="s1"></i><i class="s2"></i><i></i><i></i><i></i></div>
+            <div class="r-foot">
+              <div><small>Document</small><b>PDF</b></div>
+              <button class="open">Open</button>
+            </div>
+          </div>
+        </article>
+
+        <div class="head mt"><h2>Weekly <span>Job Listings</span></h2><button class="btn-outline">View All <img class="ico" src="assets/icons/light/arrow-up-right.svg" alt=""></button></div>
+        <div class="donut-wrap">
+          <svg class="donut" viewBox="0 0 253 253" id="donut"></svg>
+          <div class="donut-info">
+            <div><span class="big" data-count="77600">0</span><b> Total Resume</b></div>
+            <small>Resumes collected this week</small>
+          </div>
+        </div>
+        <div class="jobs" id="jobs"></div>
+      </section>
+
+      <!-- KOLOM KANAN -->
+      <div class="col-right">
+        <div class="stats" id="stats"></div>
+
+        <section class="card chart-card">
+          <div class="head">
+            <div class="chart-title">
+              <h2>HR Team Recruitment <span>Diagram</span></h2>
+              <span class="lg-item"><i class="dot grey"></i>Interview</span>
+              <span class="lg-item on"><i class="dot"></i>On Boarding</span>
+            </div>
+            <div class="chart-right">
+              <small>+8</small>
+              <span class="stack"><img class="avatar" src="assets/img/team-1.jpg" alt=""><img class="avatar" src="assets/img/team-2.jpg" alt=""><img class="avatar" src="assets/img/team-3.jpg" alt=""><img class="avatar" src="assets/img/team-4.jpg" alt=""></span>
+              <button class="btn-outline">Year <img class="ico" src="assets/icons/light/arrow-up-right.svg" alt=""></button>
+            </div>
+          </div>
+          <div class="chart">
+            <div class="yaxis" id="yaxis"></div>
+            <div class="plot" id="plot"></div>
+          </div>
+        </section>
+
+        <div class="bottom">
+          <section class="card">
+            <div class="head"><h2>Interviews <span>Schedule</span></h2><button class="btn-outline">View All <img class="ico" src="assets/icons/light/arrow-up-right.svg" alt=""></button></div>
+            <div class="table">
+              <div class="tr th"><span>Candidate</span><span>Positions</span><span>Platform</span><span>Interviewers</span><span>Status</span></div>
+              <div class="tbody" id="schedule"></div>
+            </div>
+          </section>
+
+          <section class="card perf">
+            <div class="head"><h2>Top <span>Performing</span></h2><button class="btn-outline sm">View <img class="ico" src="assets/icons/light/arrow-up-right.svg" alt=""></button></div>
+            <div class="person"><img class="avatar xl" src="assets/img/daniel.jpg" alt=""><div><b>Daniel O’Connor</b><small>Head of Human Capital</small></div></div>
+            <div class="kpis">
+              <div><small>Daily Target Review</small><b data-count="500">0</b></div>
+              <div><small>Daily Target Interview</small><b data-count="10">0</b></div>
+              <div><small>Daily working hours</small><b><span data-count="9">0</span> hours</b></div>
+            </div>
+            <div class="time"><span>2 hours 30 minutes</span><em class="chip">28%</em></div>
+            <div class="track"><i id="timeFill" data-w="19"></i></div>
+            <div class="marks"><span class="on"><i></i>Start</span><span><i></i>Break</span><span><i></i>Finish</span></div>
+          </section>
+        </div>
+      </div>
+    </div>
+</section>
+<section class="page" id="page-resume"></section>
+<section class="page" id="page-jobs"></section>
+<section class="page" id="page-interviews"></section>
+</div>
+  </main>
+</div>
+<script src="script.js"></script>
+<script src="pages.js"></script>
+</body>
+</html>
