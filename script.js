@@ -1,6 +1,6 @@
 /* ===== DATA (ganti / sambungkan ke API nanti) ===== */
 // icon berwarna / sama di kedua tema -> assets/icons/ ; icon hitam-putih -> assets/icons/light/ atau /dark/
-const SHARED = new Set(['logo', 'bell-white', 'doc', 'block', 'hold']);
+const SHARED = new Set(['logo', 'bell-white', 'doc', 'block', 'hold', 'x-red']);
 const ICON = n => SHARED.has(n) ? `assets/icons/${n}.svg` : `assets/icons/light/${n}.svg`;
 const AV = n => `assets/img/${n}.jpg`;
 const NAV = [

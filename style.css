@@ -1,8 +1,8 @@
 /* ====== DESIGN CANVAS: 2382px (lebar frame Figma). Semua ukuran = px di frame itu.
    script.js men-zoom .app supaya pas lebar layar -> proporsi 1:1 dengan desain ====== */
 :root{--bg:#f0f0f0;--card:#fff;--ink:#0a0a0a;--muted:#b3b3b3;--soft:#e5e5e5;--soft2:#ebebeb;--line:#dcdcdc;
---green:#0a8a0a;--dgreen:#00500f;--red:#e11919;--ph:#d9d9d9;--sub:#444}
-body.dark{--bg:#121412;--card:#1b1e1b;--ink:#f2f2f2;--muted:#6f766f;--soft:#2a2e2a;--soft2:#252925;--line:#333833;--ph:#3a3f3a;--sub:#c9ccc9}
+--green:#0a8a0a;--dgreen:#00500f;--red:#e11919;--ph:#d9d9d9;--sub:#444;--meta:#777;--desc:#8d8d8d}
+body.dark{--bg:#121412;--card:#1b1e1b;--ink:#f2f2f2;--muted:#6f766f;--soft:#2a2e2a;--soft2:#252925;--line:#333833;--ph:#3a3f3a;--sub:#c9ccc9;--meta:#9ca39c;--desc:#7f867f}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{overflow-x:hidden}
 body{font-family:'Onest',system-ui,sans-serif;background:var(--bg);color:var(--ink);transition:background .4s,color .4s}
@@ -260,3 +260,27 @@ body:not([data-page=dashboard])[data-page] .tool.date{display:none}
 #page-dashboard.reset .tbody .tr{opacity:0!important;transform:translateY(12px)!important;transition:none!important}
 #page-dashboard.reset .track i,#page-dashboard.reset .donut circle{transition:none!important}
 .lc-row>.st-p,.lc-row>.st-r{overflow:visible;text-overflow:clip;padding-right:0}
+
+/* ===== JOB OPENINGS ===== */
+.search-in{display:none;width:279px;border:0;font:inherit;font-size:19px;font-weight:500;outline:0;color:var(--ink);padding:0 21px}
+.search-in::placeholder{color:var(--muted);font-weight:400}
+body[data-page=jobs] .search-in{display:block}
+.jobs-card{padding-bottom:0}
+.jobs-scroll{flex:1;min-height:0;overflow-y:auto;margin:75px -28px 0 0;padding:0 28px 34px 0;scrollbar-width:thin}
+.job-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:29px 51px}
+.job-sep{border-top:1.5px solid #555;margin:80px 0}
+.job-card{height:455px;display:flex;flex-direction:column;padding:21px 22px 22px;border:1.5px solid var(--line);border-radius:7px;background:var(--card);transition:transform .25s,box-shadow .25s,border-color .25s}
+.job-card:hover{transform:translateY(-4px);border-color:#999;box-shadow:0 12px 26px rgba(0,0,0,.08)}
+.jobs-scroll:not(.noanim) .job-card{animation:cardIn .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(min(var(--i),8)*70ms + .3s)}
+@keyframes cardIn{from{opacity:0;transform:translateY(26px) scale(.97)}}
+.jb{align-self:flex-start;height:45px;line-height:45px;padding:0 25px;background:#0aa40a;color:#fff;border-radius:7px;font-size:20.5px;font-weight:600}
+.job-card h3{margin-top:21px;font-size:34px;line-height:44px;font-weight:600;letter-spacing:-.4px}
+.jm{display:flex;gap:26px;height:30px;margin-top:16px;align-items:center;color:var(--meta);font-size:20.5px;white-space:nowrap}
+.jm+.jm{margin-top:10px}
+.jm-i{display:inline-flex;align-items:center;gap:8px}.jm-i .ico{width:26px;height:26px}
+.jd{margin-top:27px;font-size:17.5px;line-height:25px;color:var(--desc);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.jc-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid #666;padding-top:21px}
+.jbtn{display:inline-flex;align-items:center;gap:12px;height:47px;padding:0 20px;border:1.5px solid #666;border-radius:8px;background:var(--card);color:var(--ink);font-size:20.5px;font-weight:500;transition:background .2s,transform .2s}
+.jbtn:hover{background:var(--soft);transform:translateY(-2px)}
+.jbtn .ico{width:22px;height:22px}.jbtn.red{color:#f0301b}
+.closed-label{color:#f0301b;font-size:20.5px;font-weight:500;padding-left:21px}

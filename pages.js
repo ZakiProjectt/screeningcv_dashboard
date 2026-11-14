@@ -44,6 +44,65 @@ function renderInterviews() {
 }
 function afterRender() { if (document.body.classList.contains('dark')) applyIcons(); markOk(); }
 
+/* ===== JOB OPENINGS ===== */
+const JOB_DEPTS = ['Legal & Compliance', 'Engineering & IT', 'Product Design', 'Management', 'Human Resources'];
+const JOB_LOCS = ['Jakarta', 'Bandung', 'Denpasar', 'Surabaya'], JOB_EMPS = ['WFO', 'Intern', 'Remote'];
+const mk = (open, title, city, emp, date, dept, desc) => ({ open, title, city, emp, date, dept, desc });
+const JOBS_DATA = [   // open=1 -> Close Position, open=0 -> Closed
+  mk(1,'Sr. UI/UX Designer','Jakarta','WFO','2027.01.28','Product Design','We are looking for a visionary and user-centric Sr. UI/UX Designer to lead the end-to-end design lifecycle of our core digital products. You will bridge business goals and user needs by transforming complex workflows into intuitive....'),
+  mk(1,'Front-End Developer','Jakarta','WFO','2027.01.20','Engineering & IT','We are looking for a skilled and detail-oriented Front-End Developer to build responsive, high-performance, and engaging web applications. You will work closely with UI/UX designers and backend engineers to translate design....'),
+  mk(1,'IT Support','Jakarta','WFO','2026.12.20','Engineering & IT',"We are looking for a reliable and problem-solving IT Support specialist to ensure the smooth operation of our company's computer systems, hardware, network infrastructure, and software applications. You will serve as the primary tech..."),
+  mk(1,'Associate Product Manager','Jakarta','WFO','2026.12.18','Management','We are looking for an ambitious, data-driven, and user-focused Associate Product Manager (APM) to support the end-to-end lifecycle of our digital products. You will work closely with cross-functional teams including designers..'),
+  mk(1,'Talent Acquisition Specialist','Jakarta','WFO','2026.12.15','Human Resources','We are looking for a proactive and people-oriented Talent Acquisition Specialist to attract, screen, and hire top talent across the company. You will partner closely with hiring managers and HR teams to deliver an excellent candidate experience....'),
+  mk(1,'Risk Management Analyst','Jakarta','WFO','2026.12.10','Management','We are looking for a sharp, analytical, and proactive Risk Management Analyst to identify, assess, and mitigate potential operational, financial, and strategic risks. You will work closely with management and cross-functional...'),
+  mk(1,'IT Security Architect','Jakarta','WFO','2026.11.30','Engineering & IT',"We are looking for a strategic, highly skilled, and security-focused IT Security Architect to design, implement, and oversee robust enterprise security solutions. You will safeguard our company's cloud infrastructure, networks,"),
+  mk(0,'Tax - People Advisory Services','Jakarta','Intern','2026.09.16','Human Resources','We are looking for a motivated, analytical, and detail-oriented Tax - People Advisory Services Intern to support our team in delivering comprehensive tax, mobility, and human capital advisory solutions. You will gain hands-on exper....'),
+  mk(0,'Regulatory Affairs Executive','Jakarta','Intern','2026.09.10','Legal & Compliance',"We are looking for a detail-oriented, analytical, and proactive Regulatory Affairs Executive Intern to support our Legal & Compliance team in ensuring our company's products, operations, and documentation adhere to loc..."),
+  mk(0,'UI/UX Product Design Intern','Jakarta','Intern','2026.09.17','Product Design','We are looking for a creative, user-centric, and detail-oriented UI/UX Product Design Intern to support our Product Design team in crafting intuitive and visually compelling digital experiences. You will gain hands-on experience...'),
+  mk(0,'Project Engineering','Jakarta','WFO','2026.09.06','Engineering & IT','We are looking for a highly organized, technical, and results-driven Project Engineer to oversee, plan, and execute engineering projects from inception to completion. You will work closely with cross-functional technical teams...'),
+  mk(0,'Human Capital Intern','Bandung','WFO','2026.12.15','Human Resources','We are looking for an enthusiastic, organized, and people-oriented Human Capital Intern to support our Human Resources team in daily talent acquisition, employee engagement, and HR operations. You will gain hands...'),
+  mk(0,'Quality Engineer','Surabaya','WFO','2026.12.10','Engineering & IT','We are looking for a meticulous, analytical, and detail-oriented Quality Engineer to ensure our software applications, systems, and product features meet the highest standards of reliability, performance, and user experie...'),
+  mk(0,'Scent Design Associate','Jakarta','Intern','2026.11.30','Product Design','We are looking for a creative, sensory-driven, and detail-oriented Scent Design Associate Intern to join our Product Design team. You will support the research, formulation, evaluation, and development of unique fragrance conc...'),
+  mk(0,'Jr. Web Designer','Jakarta','WFO','2026.12.15','Product Design','We are looking for a creative, detail-oriented, and passionate Jr. Web Designer to join our Product Design team. You will assist in designing engaging, responsive, and visually appealing web interfaces, landing pages, and digital as...'),
+  mk(0,'Senior Legal Officer','Denpasar','Intern','2026.12.10','Legal & Compliance','We are looking for an experienced, strategic, and meticulous Senior Legal Officer to manage our legal operations, ensure corporate compliance, and mitigate legal risks. You will work closely with management and cross-functional teams to...'),
+];
+const jf = { q: '', dept: '', loc: '', emp: '' };
+const ddHtml = (id, w, icon, label, all, items) => `<div class="dd" id="${id}" style="width:${w}px" data-label="${label}"><div class="dd-box"><button class="dd-btn">${ico(icon)}<span class="dd-label">${label}</span><img class="ico chev" src="${ICON('chevron-down')}" alt=""></button><button data-v="">${all}</button>${items.map(c => `<button data-v="${c}">${c}</button>`).join('')}</div></div>`;
+function bindDD(id, onPick) {
+  const box = $('#' + id);
+  box.querySelector('.dd-btn').addEventListener('click', e => { e.stopPropagation(); document.querySelectorAll('.dd.open').forEach(d => d !== box && d.classList.remove('open')); box.classList.toggle('open'); });
+  box.querySelectorAll('[data-v]').forEach(b => b.addEventListener('click', () => {
+    const v = b.dataset.v;
+    box.querySelectorAll('[data-v]').forEach(x => x.classList.toggle('sel', !!v && x === b));
+    box.querySelector('.dd-label').textContent = v || box.dataset.label; box.classList.remove('open'); onPick(v);
+  }));
+}
+const jmi = (i, t) => `<span class="jm-i">${ico(i)}${t}</span>`;
+const jobCard = (j, i) => `<article class="job-card" style="--i:${i}"><span class="jb">Full Time</span><h3>${j.title}</h3>
+  <div class="jm">${jmi('pin', j.city + ', Indonesia')}${jmi('briefcase', j.emp)}${jmi('clock', j.date)}</div><div class="jm">${jmi('people', j.dept)}</div>
+  <p class="jd">${j.desc}</p><div class="jc-foot">${j.open ? `<button class="jbtn red" data-close="${JOBS_DATA.indexOf(j)}">Close Position${ico('x-red')}</button>` : '<span class="closed-label">Closed</span>'}
+  <button class="jbtn">Edit Details${ico('chevron-right')}</button></div></article>`;
+function renderJobs(anim = true) {
+  const q = jf.q.trim().toLowerCase();
+  const list = JOBS_DATA.filter(j => (!q || j.title.toLowerCase().includes(q)) && (!jf.dept || j.dept === jf.dept) && (!jf.loc || j.city === jf.loc) && (!jf.emp || j.emp === jf.emp));
+  const open = list.filter(j => j.open), closed = list.filter(j => !j.open); let n = 0;
+  const grid = a => `<div class="job-grid">${a.map(j => jobCard(j, n++)).join('')}</div>`, el = $('#jobScroll');
+  el.className = 'jobs-scroll' + (anim ? '' : ' noanim');
+  el.innerHTML = list.length ? (open.length ? grid(open) : '') + (open.length && closed.length ? '<div class="job-sep"></div>' : '') + (closed.length ? grid(closed) : '') : '<div class="empty">Tidak ada posisi yang cocok</div>';
+  el.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => { JOBS_DATA[b.dataset.close].open = false; renderJobs(); }));
+  afterRender();
+}
+function buildJobs() {
+  $('#page-jobs').innerHTML = `<div class="card list-card jobs-card"><div class="lc-head"><h2 class="lc-title">All Job <span>Openings</span></h2>
+    <div class="lc-tools"><button class="lc-btn">${ico('plus-circle')}Create New Position</button>
+    ${ddHtml('ddDept', 344, 'department', 'Filtered by Department', 'All Departments', JOB_DEPTS)}${ddHtml('ddLoc', 203, 'location', 'Location', 'All Locations', JOB_LOCS)}${ddHtml('ddEmp', 294, 'employment', 'Employment Type', 'All Types', JOB_EMPS)}</div></div>
+    <div class="jobs-scroll" id="jobScroll"></div></div>`;
+  renderJobs();
+  bindDD('ddDept', v => { jf.dept = v; renderJobs(); }); bindDD('ddLoc', v => { jf.loc = v; renderJobs(); }); bindDD('ddEmp', v => { jf.emp = v; renderJobs(); });
+  $('#jobSearch').addEventListener('input', e => { jf.q = e.target.value; renderJobs(false); });
+  document.addEventListener('click', () => document.querySelectorAll('.dd.open').forEach(d => d.classList.remove('open')));
+}
+
 function buildPages() {
   const dd = `<button class="lc-btn" style="gap:14px">${ico('folder')}Category Job${ico('chevron-down')}</button>`;
   $('#page-resume').innerHTML = `<div class="card list-card"><div class="lc-head"><h2 class="lc-title">All Candidate's <span>Resume</span></h2>
@@ -54,8 +113,7 @@ function buildPages() {
     <div class="lc-tools"><button class="lc-btn">${ico('plus-circle')}Create a Schedule</button>${dd}
     <button class="lc-btn">${ico('calendar')}Month${ico('chevron-down')}</button><button class="lc-btn">${ico('calendar')}Year${ico('chevron-down')}</button></div></div>
     <div class="lc-th g-int"><span>Candidate</span><span>Category Job</span><span>Step</span><span>Status</span><span>Interviewers</span><span>File</span><span>Decision</span></div><div class="lc-scroll" id="intRows"></div></div>`;
-  $('#page-jobs').innerHTML = `<div class="card list-card"><div class="lc-head"><h2 class="lc-title">All Job <span>Openings</span></h2></div>
-    <div class="jobs-empty">Kerangka halaman Job Openings sudah siap.<br>Desainnya belum dikirim, jadi isinya masih kosong.</div></div>`;
+  buildJobs();
   renderResumes(); renderInterviews();
   const box = $('#dd');
   $('#ddBtn').addEventListener('click', e => { e.stopPropagation(); box.classList.toggle('open'); });
@@ -103,7 +161,7 @@ function refreshPage() {
   if (current === 'dashboard') replayDashboard();
   else if (current === 'resume') renderResumes();
   else if (current === 'interviews') renderInterviews();
-  else { const c = $('#page-jobs .list-card'); c.style.animation = 'none'; void c.offsetWidth; c.style.animation = ''; }
+  else if (current === 'jobs') renderJobs();
 }
 
 buildPages();
