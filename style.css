@@ -1,8 +1,8 @@
 /* ====== DESIGN CANVAS: 2382px (lebar frame Figma). Semua ukuran = px di frame itu.
    script.js men-zoom .app supaya pas lebar layar -> proporsi 1:1 dengan desain ====== */
 :root{--bg:#f0f0f0;--card:#fff;--ink:#0a0a0a;--muted:#b3b3b3;--soft:#e5e5e5;--soft2:#ebebeb;--line:#dcdcdc;
---green:#0a8a0a;--dgreen:#00500f;--red:#e11919;--ph:#d9d9d9;--sub:#444;--meta:#777;--desc:#8d8d8d}
-body.dark{--bg:#121412;--card:#1b1e1b;--ink:#f2f2f2;--muted:#6f766f;--soft:#2a2e2a;--soft2:#252925;--line:#333833;--ph:#3a3f3a;--sub:#c9ccc9;--meta:#9ca39c;--desc:#7f867f}
+--green:#0a8a0a;--dgreen:#00500f;--red:#e11919;--ph:#d9d9d9;--sub:#444;--bd:#8a8a8a;--meta:#777;--desc:#8d8d8d}
+body.dark{--bg:#121412;--card:#1b1e1b;--ink:#f2f2f2;--muted:#6f766f;--soft:#2a2e2a;--soft2:#252925;--line:#333833;--ph:#3a3f3a;--sub:#c9ccc9;--bd:#4d534d;--meta:#9ca39c;--desc:#7f867f}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{overflow-x:hidden}
 body{font-family:'Onest',system-ui,sans-serif;background:var(--bg);color:var(--ink);transition:background .4s,color .4s}
@@ -97,8 +97,8 @@ h2{font-size:25.5px;font-weight:500;letter-spacing:-.3px}h2 span{color:var(--mut
 .segs i:nth-child(1){transition-delay:.9s}.segs i:nth-child(2){transition-delay:1.05s}.segs i:nth-child(3){transition-delay:1.2s}.segs i:nth-child(4){transition-delay:1.3s}.segs i:nth-child(5){transition-delay:1.4s}
 .r-foot{display:flex;justify-content:space-between;align-items:center;margin-top:47px}
 .r-foot div{display:flex;flex-direction:column;font-size:18.5px;font-weight:500;line-height:26px}.r-foot small{font-size:18px;font-weight:400}
-.open{width:123px;height:46px;background:var(--card);border-radius:10px;color:var(--dgreen);font-size:20px;font-weight:600;transition:transform .25s,box-shadow .25s}
-.open:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(0,80,15,.18)}
+.btn-open{width:123px;height:46px;background:var(--card);border-radius:10px;color:var(--dgreen);font-size:20px;font-weight:600;transition:transform .25s,box-shadow .25s}
+.btn-open:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(0,80,15,.18)}
 /* donut */
 .donut-wrap{display:flex;justify-content:space-between;align-items:center;margin-top:26px;height:254px}
 .donut{width:253px;height:253px;flex:none;transform:rotate(210deg)}
@@ -284,3 +284,39 @@ body[data-page=jobs] .search-in{display:block}
 .jbtn:hover{background:var(--soft);transform:translateY(-2px)}
 .jbtn .ico{width:22px;height:22px}.jbtn.red{color:#f0301b}
 .closed-label{color:#f0301b;font-size:20.5px;font-weight:500;padding-left:21px}
+
+/* ===== PANEL CREATE NEW POSITION ===== */
+.app{position:relative}
+.scrim{position:absolute;inset:0;z-index:40;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .4s}
+.scrim.open{opacity:1;pointer-events:auto}
+.cp{position:absolute;left:1623px;top:253px;width:759px;height:1111px;z-index:41;background:var(--card);border-radius:40px 0 0 40px;padding:40px 51px 0 54px;transform:translateX(100%);visibility:hidden;transition:transform .55s cubic-bezier(.2,.8,.2,1),visibility 0s linear .55s,background .4s;overflow:visible}
+.cp.open{transform:none;visibility:visible;transition-delay:0s}
+.cp-head{display:flex;justify-content:space-between;align-items:center;height:46px}
+.cp-head h2{font-size:31px;font-weight:600;letter-spacing:-.4px}.cp-head h2 span{color:var(--muted);font-weight:500}
+.cp-x{width:36px;height:36px;display:grid;place-items:center;transition:transform .3s}.cp-x:hover{transform:rotate(90deg)}.cp-x .ico{width:28px;height:28px}
+.cg{margin-top:26px}.cg.first{margin-top:22px}.fr .cg{margin-top:0}
+.fr{display:grid;gap:41px;margin-top:26px}.fr.r1{grid-template-columns:227px 1fr}.fr.r2{grid-template-columns:1fr 1fr}
+.cg label{display:block;font-size:21px;line-height:26px;font-weight:500;margin-bottom:9px}
+.cp.open .cg{animation:fieldIn .5s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(var(--k)*60ms + .25s)}
+@keyframes fieldIn{from{opacity:0;transform:translateY(14px)}}
+.fi{display:flex;align-items:center;width:100%;height:63px;padding:0 25px;border:1.5px solid var(--bd);border-radius:8px;background:var(--card);color:var(--ink);font:inherit;font-size:22px;font-weight:500;text-align:left;outline:0;transition:border-color .2s,box-shadow .2s}
+.fi:focus,.fd.open .fd-btn{border-color:var(--green);box-shadow:0 0 0 3px rgba(10,138,10,.12)}
+.fi::placeholder{color:var(--muted);font-weight:400}
+textarea.fi{display:block;height:276px;padding:22px 25px;resize:none;line-height:30px}
+.fi.err{border-color:#f0301b;animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}60%{transform:translateX(6px)}}
+.fd{position:relative}.fd.open{z-index:10}
+.fd-btn .chev{margin-left:auto;width:24px;height:24px;transition:transform .3s}.fd.open .chev{transform:rotate(180deg)}
+.fd-list{position:absolute;left:0;right:0;top:calc(100% + 8px);padding:8px 0;background:var(--card);border:1.5px solid var(--bd);border-radius:8px;opacity:0;transform:translateY(-8px);pointer-events:none;transition:opacity .2s,transform .25s}
+.fd.open .fd-list{opacity:1;transform:none;pointer-events:auto}
+.fd-list button{display:block;width:100%;height:50px;font-size:22px;font-weight:500;color:var(--ink);text-align:center;transition:background .2s}
+.fd-list button:hover{background:var(--soft2)}.fd-list button.sel{color:var(--green)}
+.fd-date{position:relative;justify-content:space-between;cursor:pointer}.fd-date .ico{width:26px;height:26px}
+.fd-date input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.ph{color:var(--muted);font-weight:400}
+.cp-post{display:block;width:100%;height:64px;margin-top:61px;border-radius:8px;background:#06a81a;color:#fff;font-size:22px;font-weight:500;transition:filter .2s,transform .2s}
+.cp-post:hover{filter:brightness(1.08)}.cp-post:active{transform:scale(.985)}
+.toast{position:absolute;left:50%;top:120px;z-index:60;padding:16px 34px;border-radius:12px;background:var(--ink);color:var(--bg);font-size:20px;font-weight:500;transform:translate(-50%,-20px);opacity:0;pointer-events:none;transition:opacity .3s,transform .4s cubic-bezier(.2,.8,.2,1)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.cg:has(.fd.open){position:relative;z-index:20}

@@ -78,7 +78,7 @@ function bindDD(id, onPick) {
   }));
 }
 const jmi = (i, t) => `<span class="jm-i">${ico(i)}${t}</span>`;
-const jobCard = (j, i) => `<article class="job-card" style="--i:${i}"><span class="jb">Full Time</span><h3>${j.title}</h3>
+const jobCard = (j, i) => `<article class="job-card" style="--i:${i}"><span class="jb">${j.pref || 'Full Time'}</span><h3>${j.title}</h3>
   <div class="jm">${jmi('pin', j.city + ', Indonesia')}${jmi('briefcase', j.emp)}${jmi('clock', j.date)}</div><div class="jm">${jmi('people', j.dept)}</div>
   <p class="jd">${j.desc}</p><div class="jc-foot">${j.open ? `<button class="jbtn red" data-close="${JOBS_DATA.indexOf(j)}">Close Position${ico('x-red')}</button>` : '<span class="closed-label">Closed</span>'}
   <button class="jbtn">Edit Details${ico('chevron-right')}</button></div></article>`;
@@ -94,13 +94,70 @@ function renderJobs(anim = true) {
 }
 function buildJobs() {
   $('#page-jobs').innerHTML = `<div class="card list-card jobs-card"><div class="lc-head"><h2 class="lc-title">All Job <span>Openings</span></h2>
-    <div class="lc-tools"><button class="lc-btn">${ico('plus-circle')}Create New Position</button>
+    <div class="lc-tools"><button class="lc-btn" id="btnCreate">${ico('plus-circle')}Create New Position</button>
     ${ddHtml('ddDept', 344, 'department', 'Filtered by Department', 'All Departments', JOB_DEPTS)}${ddHtml('ddLoc', 203, 'location', 'Location', 'All Locations', JOB_LOCS)}${ddHtml('ddEmp', 294, 'employment', 'Employment Type', 'All Types', JOB_EMPS)}</div></div>
     <div class="jobs-scroll" id="jobScroll"></div></div>`;
   renderJobs();
   bindDD('ddDept', v => { jf.dept = v; renderJobs(); }); bindDD('ddLoc', v => { jf.loc = v; renderJobs(); }); bindDD('ddEmp', v => { jf.emp = v; renderJobs(); });
+  $('#btnCreate').addEventListener('click', openCP);
   $('#jobSearch').addEventListener('input', e => { jf.q = e.target.value; renderJobs(false); });
   document.addEventListener('click', () => document.querySelectorAll('.dd.open').forEach(d => d.classList.remove('open')));
+}
+
+/* ===== PANEL "CREATE NEW POSITION" (slide dari kanan) ===== */
+const CP = { pref: ['Full Time', 'Hybrid'], loc: JOB_LOCS.map(c => c + ', Indonesia'), emp: ['WFO', 'Hybrid', 'Remote'], dept: JOB_DEPTS };
+const CP_DEF = { fdPref: 'Full Time', fdLoc: 'Jakarta, Indonesia', fdEmp: 'WFO', fdDept: 'Product Design' };
+const fdHtml = (id, items) => `<div class="fd" id="${id}" data-v="${CP_DEF[id]}"><button type="button" class="fi fd-btn"><span>${CP_DEF[id]}</span><img class="ico chev" src="${ICON('chevron-down')}" alt=""></button>
+  <div class="fd-list">${items.map(x => `<button type="button" data-o="${x}" class="${x === CP_DEF[id] ? 'sel' : ''}">${x}</button>`).join('')}</div></div>`;
+const DATE_PH = 'Wednesday, November 2026';
+function setFd(id, v) { const b = $('#' + id); b.dataset.v = v; b.querySelector('.fd-btn span').textContent = v; b.querySelectorAll('[data-o]').forEach(x => x.classList.toggle('sel', x.dataset.o === v)); }
+function resetForm() {
+  $('#cpName').value = ''; $('#cpDesc').value = ''; $('#cpDate').value = '';
+  $('#cpDateTxt').textContent = DATE_PH; $('#cpDateTxt').classList.add('ph');
+  Object.keys(CP_DEF).forEach(id => setFd(id, CP_DEF[id]));
+  document.querySelectorAll('#cp .err').forEach(e => e.classList.remove('err'));
+}
+function openCP() { window.scrollTo(0, 0); resetForm(); if (document.body.classList.contains('dark')) applyIcons(); $('#scrim').classList.add('open'); $('#cp').classList.add('open'); setTimeout(() => $('#cpName').focus({ preventScroll: true }), 550); }
+function closeCP() { $('#scrim').classList.remove('open'); $('#cp').classList.remove('open'); document.querySelectorAll('.fd.open').forEach(d => d.classList.remove('open')); }
+function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('show'), 2400); }
+function buildCreate() {
+  const w = document.createElement('div');
+  w.innerHTML = `<div class="scrim" id="scrim"></div><div class="toast" id="toast"></div>
+  <aside class="cp" id="cp" aria-label="Create New Position">
+    <div class="cp-head"><h2>Create New <span>Position</span></h2><button class="cp-x" id="cpX" aria-label="Close">${ico('close')}</button></div>
+    <div class="cg first" style="--k:0"><label>Name Position</label><input class="fi" id="cpName" placeholder="Create name position" autocomplete="off"></div>
+    <div class="fr r1"><div class="cg" style="--k:1"><label>Preferences</label>${fdHtml('fdPref', CP.pref)}</div><div class="cg" style="--k:1"><label>Location</label>${fdHtml('fdLoc', CP.loc)}</div></div>
+    <div class="fr r2"><div class="cg" style="--k:2"><label>Employment Types</label>${fdHtml('fdEmp', CP.emp)}</div><div class="cg" style="--k:2"><label>Departments</label>${fdHtml('fdDept', CP.dept)}</div></div>
+    <div class="cg" style="--k:3"><label>Job Posting Date</label><div class="fi fd-date"><span id="cpDateTxt" class="ph">${DATE_PH}</span>${ico('calendar')}<input type="date" id="cpDate"></div></div>
+    <div class="cg" style="--k:4"><label>Description</label><textarea class="fi" id="cpDesc" placeholder="Job Description"></textarea></div>
+    <button class="cp-post" id="cpPost">Post New Position</button></aside>`;
+  appEl.append(...w.children);
+  $('#scrim').addEventListener('click', closeCP); $('#cpX').addEventListener('click', closeCP);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCP(); });
+  document.querySelectorAll('.fd').forEach(box => {
+    box.querySelector('.fd-btn').addEventListener('click', e => { e.stopPropagation(); document.querySelectorAll('.fd.open').forEach(d => d !== box && d.classList.remove('open')); box.classList.toggle('open'); });
+    box.querySelectorAll('[data-o]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); setFd(box.id, b.dataset.o); box.classList.remove('open'); }));
+  });
+  document.addEventListener('click', () => document.querySelectorAll('.fd.open').forEach(d => d.classList.remove('open')));
+  const dIn = $('#cpDate');
+  dIn.addEventListener('click', () => { try { dIn.showPicker && dIn.showPicker(); } catch (e) {} });
+  dIn.addEventListener('change', () => {
+    const t = $('#cpDateTxt'); t.classList.toggle('ph', !dIn.value);
+    t.textContent = dIn.value ? new Date(dIn.value + 'T00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : DATE_PH;
+  });
+  ['#cpName', '#cpDesc'].forEach(s => $(s).addEventListener('input', e => e.target.classList.remove('err')));
+  $('#cpPost').addEventListener('click', () => {
+    let bad = false;
+    ['#cpName', '#cpDesc'].forEach(s => { const e = $(s); e.classList.remove('err'); if (!e.value.trim()) { void e.offsetWidth; e.classList.add('err'); bad = true; } });
+    if (bad) return;
+    const now = new Date(), pad = n => String(n).padStart(2, '0');
+    const date = dIn.value ? dIn.value.replace(/-/g, '.') : `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())}`;
+    const job = mk(1, $('#cpName').value.trim(), $('#fdLoc').dataset.v.split(',')[0], $('#fdEmp').dataset.v, date, $('#fdDept').dataset.v, $('#cpDesc').value.trim());
+    job.pref = $('#fdPref').dataset.v; JOBS_DATA.unshift(job);
+    Object.assign(jf, { q: '', dept: '', loc: '', emp: '' }); $('#jobSearch').value = '';          // reset filter supaya posisi baru langsung terlihat
+    ['ddDept', 'ddLoc', 'ddEmp'].forEach(id => { const b = $('#' + id); b.querySelector('.dd-label').textContent = b.dataset.label; b.querySelectorAll('.sel').forEach(x => x.classList.remove('sel')); });
+    closeCP(); renderJobs(); $('#jobScroll').scrollTop = 0; toast('Position posted');
+  });
 }
 
 function buildPages() {
@@ -164,7 +221,7 @@ function refreshPage() {
   else if (current === 'jobs') renderJobs();
 }
 
-buildPages();
+buildPages(); buildCreate();
 document.querySelectorAll('.nav-item[data-page]').forEach(n => n.addEventListener('click', () => showPage(n.dataset.page)));
 window.addEventListener('hashchange', () => showPage(location.hash.slice(1)));
 if (PAGES[location.hash.slice(1)]) showPage(location.hash.slice(1), false);
