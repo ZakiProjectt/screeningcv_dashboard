@@ -1,8 +1,8 @@
 /* ====== DESIGN CANVAS: 2382px (lebar frame Figma). Semua ukuran = px di frame itu.
    script.js men-zoom .app supaya pas lebar layar -> proporsi 1:1 dengan desain ====== */
 :root{--bg:#f0f0f0;--card:#fff;--ink:#0a0a0a;--muted:#b3b3b3;--soft:#e5e5e5;--soft2:#ebebeb;--line:#dcdcdc;
---green:#0a8a0a;--dgreen:#00500f;--red:#e11919;--ph:#d9d9d9;--sub:#444;--bd:#8a8a8a;--meta:#777;--desc:#8d8d8d}
-body.dark{--bg:#121412;--card:#1b1e1b;--ink:#f2f2f2;--muted:#6f766f;--soft:#2a2e2a;--soft2:#252925;--line:#333833;--ph:#3a3f3a;--sub:#c9ccc9;--bd:#4d534d;--meta:#9ca39c;--desc:#7f867f}
+--green:#0a8a0a;--dgreen:#00500f;--red:#e11919;--ph:#d9d9d9;--sub:#444;--bd:#8a8a8a;--ed:#0a7a14;--lg:#0a9a0a;--lb:#0a2eb4;--ly:#e0cf00;--meta:#777;--desc:#8d8d8d}
+body.dark{--bg:#121412;--card:#1b1e1b;--ink:#f2f2f2;--muted:#6f766f;--soft:#2a2e2a;--soft2:#252925;--line:#333833;--ph:#3a3f3a;--sub:#c9ccc9;--bd:#4d534d;--ed:#3ddc4f;--lg:#8BFF9A;--lb:#8EB0FF;--ly:#FFF6A8;--meta:#9ca39c;--desc:#7f867f}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{overflow-x:hidden}
 body{font-family:'Onest',system-ui,sans-serif;background:var(--bg);color:var(--ink);transition:background .4s,color .4s}
@@ -154,7 +154,7 @@ body.dark .b-grey{background:#2d322d}
 .bottom{display:grid;grid-template-columns:minmax(0,758fr) minmax(0,411fr);gap:28px;height:451px;margin-top:26px}
 .bottom .card{padding:25px 29px 0 29px}
 .table{margin-top:16px}
-.tr{display:grid;grid-template-columns:150px 148px 150px 100px 1fr;align-items:center;font-size:13.5px;font-weight:500}
+.tr{display:grid;grid-template-columns:150fr 148fr 150fr 100fr 143fr;align-items:center;font-size:13.5px;font-weight:500}
 .tr.th{height:47px;border-top:1.5px solid #777;border-bottom:1.5px solid #777;font-weight:600;font-size:13.5px}
 .tr.th span:nth-child(4){text-align:center}.tr.th span:nth-child(5){width:92px;justify-self:end;text-align:center}
 .tbody{height:305px;padding-top:12px;overflow:auto;scrollbar-width:thin}
@@ -320,3 +320,49 @@ textarea.fi{display:block;height:276px;padding:22px 25px;resize:none;line-height
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
 .cg:has(.fd.open){position:relative;z-index:20}
+
+/* tabel Interviews Schedule (dashboard): kolom proporsional, melebar rapi saat sidebar di-hide */
+.tr .cand b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr.th span:nth-child(5),.tr .st{width:auto;justify-self:stretch;text-align:center}
+.tr .st{padding:0}
+
+/* ===== ASSESSMENTS & TESTS ===== */
+.lc-btn.is-on{background:var(--soft)}
+.as-scroll{flex:1;min-height:0;overflow-y:auto;margin:84px -12px 0 -12px;padding-bottom:34px;scrollbar-width:thin}
+.as-cols{display:flex;gap:26px;align-items:flex-start}
+.as-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:22px}
+.as-sec{background:var(--soft);border-radius:30px;padding:32px 25px 0}
+.page.active .as-sec{animation:cardIn .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*90ms + .3s)}
+.as-h{display:flex;align-items:flex-start;gap:12px;min-height:40px}
+.as-h .dot{width:19px;height:19px;margin-top:10.5px;flex:none;background:#0aa40a}
+.as-h h3{font-size:29px;line-height:40px;font-weight:500;letter-spacing:-.3px}
+.as-sub{margin:18px 0 13px;font-size:17.5px;line-height:22px;color:var(--muted)}
+.as-card{background:var(--card);border-radius:20px;padding:22px 28px 28px;transition:transform .25s,box-shadow .25s}
+.as-card:hover{transform:translateY(-3px);box-shadow:0 10px 22px rgba(0,0,0,.08)}
+.as-card+.as-card,.as-inner{margin-top:14px}
+.as-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.as-top h4{flex:1;font-size:21px;line-height:28px;font-weight:500}
+.ago{white-space:nowrap;font-size:17.5px;line-height:28px;color:var(--muted)}
+.as-who{display:flex;align-items:center;gap:14px;margin:24px 0}
+.as-who .avatar{width:44px;height:44px}.as-who b{font-size:22px;line-height:30px;font-weight:500}
+.fl{display:flex;align-items:center;gap:24px;font-size:16px;font-weight:500;text-decoration:underline;cursor:pointer}
+.fl+.fl{margin-top:9px}.fl.g{color:var(--lg)}.fl.b{color:var(--lb)}.fl.y{color:var(--ly)}
+.fl:hover{filter:brightness(.8)}
+.fico{width:39px;height:39px;border-radius:7px;background:var(--soft2);display:grid;place-items:center;flex:none}.fico .ico{width:26px;height:26px}
+.as-extra{overflow:hidden;max-height:0;transition:max-height .6s cubic-bezier(.2,.8,.2,1)}
+.as-open .as-extra .as-card{animation:cardIn .5s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(var(--j)*60ms + .1s)}
+.see{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;margin-top:10px;padding:18px 0 20px;font-size:18.5px;font-weight:500;color:var(--ink)}
+.see .ico{width:20px;height:20px;transition:transform .35s}.as-open .see .ico{transform:rotate(180deg)}
+.as-sec:not(:has(.see)){padding-bottom:25px}
+
+/* ----- tab Questions ----- */
+.as-cols{transition:opacity .18s}.as-cols.swap{opacity:0}
+.as-cols[data-v=q] .as-col{gap:25px}
+.as-sec.q .as-list{margin-top:24px}
+.q-card{padding:23px 28px 30px}
+.ed{font-size:20px;line-height:28px;font-weight:600;color:var(--ed);cursor:pointer;transition:opacity .2s}.ed:hover{opacity:.65}
+.q-lab{margin-top:17px;font-size:17.5px;line-height:22px;color:var(--muted)}
+.q-lab+.fl{margin-top:18px}.q-lab.up{margin-top:24px}
+.q-send{display:flex;justify-content:flex-end;margin-top:14px}
+.send{min-width:113px;height:39px;padding:0 20px;border-radius:8px;background:#06a81a;color:#fff;font-size:19.5px;font-weight:600;transition:filter .2s,transform .2s}
+.send:hover{filter:brightness(1.1);transform:translateY(-2px)}.send:active{transform:scale(.97)}

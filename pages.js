@@ -16,7 +16,7 @@ const INTERVIEWS = [   // [nama, kategori, step, status(p/r), [interviewer 1-8]]
   ['Sophie Laurent','Associate Product Manager','3/5','p',[3,4]],['Lucas Wright','Sr. UI/UX Designer','3/5','r',[5,2]],['Jonah Brooks','IT Support','4/5','p',[3,7]],
   ['Arthur Vance','IT Support','3/5','p',[3,7]],['Felix Mercer','Sr. Backend Engineer','4/5','p',[1,8]],['Daisy Montgomery','Jr. UI Engineer II','4/5','p',[1,6]],
   ['Aria Davenport','UI/UX Engineer','4/5','p',[1,6]],['Stella Vance','Account Manager','4/5','p',[3,7]],['Ruby Callahan','Sr. UI/UX Designer','3/5','p',[5,2]],
-  ['Jonah Brooks','IT Support','4/5','p',[3,7]],['Arthur Vance','IT Support','3/5','p',[3,7]],['Felix Mercer','Sr. Backend Engineer','4/5','p',[1,8]],
+  ['William Pluim','IT Support','4/5','p',[3,7]],['Christine Lim','IT Support','3/5','p',[3,7]],['Miguel Olivera','Sr. Backend Engineer','4/5','p',[1,8]],
 ];
 // nama file foto = nama kecil-pisah-strip; nama kembar dalam 1 daftar diberi -2, -3 (cth. jonah-brooks.jpg, jonah-brooks-2.jpg)
 const slugs = list => { const seen = {}; return list.map(r => { const s = r[0].toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, ''); seen[s] = (seen[s] || 0) + 1; return seen[s] > 1 ? `${s}-${seen[s]}` : s; }); };
@@ -160,6 +160,76 @@ function buildCreate() {
   });
 }
 
+/* ===== ASSESSMENTS & TESTS ===== */
+const FT = { psych: ['file-green', 'Psychological Test File', 'g'], take: ['file-blue', 'Take - Home Test File', 'b'], apt: ['file-blue', 'Aptitude Test', 'b'], hr: ['file-blue', 'HR Knowledge Test', 'b'], sit: ['file-yellow', 'Situational Judgement Test', 'y'] };
+const A = (pos, ago, name, f) => ({ pos, ago, name, f });
+const P2 = ['psych', 'take'], P3 = ['psych', 'apt'], P4 = ['psych', 'hr', 'sit'];
+const ASSESS = [   // kolom 1-4 (Legal & Compliance berada di bawah Management); show = jumlah kartu sebelum "See More"
+  [{ t: 'Product Design', show: 3, c: [A('Sr. UI/UX Designer', '1 h ago', 'Christopher Javier', P2), A('Sr. UI/UX Designer', '2 h ago', 'Cathrine Vinicha', P2), A('Sr. UI/UX Designer', '3 h ago', 'Lucas Wright', P2), A('Sr. UI/UX Designer', '4 h ago', 'Ruby Callahan', P2)] }],
+  [{ t: 'Engineering & IT', show: 3, c: [A('Front-End Developer', '30 m ago', 'David Costa De La Cruzz', P2), A('Front-End Developer', '45 m ago', 'Michalle Mqawni', P2), A('IT Support', '1 h ago', 'Manuel De La Vueza', P2), A('Front-End Developer', '1 h ago', 'Julian Cross', P2), A('IT Support', '1 h ago', 'Jonah Brooks', P2), A('IT Support', '1 h ago', 'Arthur Vance', P2), A('UI/UX Engineer', '2 h ago', 'Aria Davenport', P2), A('IT Support', '2 h ago', 'William Pluim', P2), A('IT Support', '2 h ago', 'Christine Lim', P2), A('Sr. Backend Engineer', '2 h ago', 'Miguel Olivera', P2)] }],
+  [{ t: 'Management', show: 2, c: [A('Associate Product Management', '25 m ago', 'Sophie Laurent', P3), A('Account Manager', '35 m ago', 'Stella Vance', P3), A('Account Manager', '35 m ago', 'Delilah Ross', P3), A('Sr. Product Manager', '39 m ago', 'Gemma Sinclair', P3)] },
+   { t: 'Legal & Compliance', show: 2, c: [A('Corporate Legal Senior Officer', '2 m ago', 'Isabel Morgan', P3), A('Sr. Legal Counsel', '1 h ago', 'Kaitlyn Murray', P3), A('Sr. Legal Counsel', '1 h ago', 'Fiona Mitchell', P3), A('Sr. Manager, Legal Counsel', '2 h ago', 'Jessica Howard', P3)] }],
+  [{ t: 'Human Resources', show: 2, c: [A('Talent Acquisition Specialist', '28 m ago', 'Valentine Liu', P4), A('Human Capital', '48 m ago', 'Christine MQalister', P4), A('Sr. HRBP Support Specialist', '1 h ago', 'Grant Gallagher', P4), A('Human Capital', '48 m ago', 'Hugo Montgomery', P4)] }],
+];
+const slug1 = n => n.toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, '');
+const asCard = (a, j) => `<article class="as-card" style="--j:${j}"><div class="as-top"><h4>${a.pos}</h4><span class="ago">${a.ago}</span></div>
+  <div class="as-who">${img(PEOPLE(slug1(a.name)))}<b>${a.name}</b></div>${a.f.map(k => `<a class="fl ${FT[k][2]}" role="button" tabindex="0"><span class="fico">${ico(FT[k][0])}</span><span>${FT[k][1]}</span></a>`).join('')}</article>`;
+function bindSee() {   // tombol See More / See Less (dipakai tab Assessments & Questions)
+  document.querySelectorAll('.as-sec .see').forEach(b => b.addEventListener('click', () => {
+    const sec = b.closest('.as-sec'), ex = sec.querySelector('.as-extra'), open = sec.classList.toggle('as-open');
+    ex.style.maxHeight = open ? ex.scrollHeight + 'px' : '0px'; b.querySelector('span').textContent = open ? 'See Less' : 'See More';
+  }));
+}
+function renderAssessments() {
+  $('#asCols').dataset.v = 'a';
+  let n = 0;
+  $('#asCols').innerHTML = ASSESS.map(col => `<div class="as-col">${col.map(s => {
+    const vis = s.c.slice(0, s.show), ex = s.c.slice(s.show);
+    return `<section class="as-sec" style="--i:${n++}"><div class="as-h"><i class="dot"></i><h3>${s.t}</h3></div><p class="as-sub">Waiting to be examined</p>
+    <div class="as-list">${vis.map(asCard).join('')}</div>${ex.length ? `<div class="as-extra"><div class="as-inner">${ex.map((a, j) => asCard(a, j)).join('')}</div></div>
+    <button class="see"><span>See More</span>${ico('chevron-down')}</button>` : ''}</section>`;
+  }).join('')}</div>`).join('');
+  bindSee();
+  afterRender();
+}
+/* ----- tab QUESTIONS ----- */
+const Q2 = ['psych', 'take'], Q3 = ['psych', 'apt'], Q4 = ['psych', 'hr', 'sit'];
+const q = (f, ...t) => t.map(x => [x, f]);
+const QUEST = [   // kolom 1-4; tiap section menampilkan 2 kartu sebelum "See More"
+  [{ t: 'Product Design', c: q(Q2, 'Sr. UI/UX Designer', 'Jr. UI/UX Designer', 'Product Designer', 'UI/UX Designer Intern', 'Product Designer Intern', 'Mobile UI Designer', 'Web Designer') },
+   { t: 'Customer Service & Support', c: q(Q3, 'Customer Service Executive', 'Customer Experience', 'Telemarketing - GSI', 'Patient Experience - HRT', 'Customer Success Associate', 'Customer Relation Officer (Jakarta)') }],
+  [{ t: 'Engineering & IT', c: q(Q2, 'Front-End Developer', 'Full Stack Developer', 'Sr. Backend Engineer', 'Jr. Software Engineer', 'Frontend Dev (React JS)', 'Application Developer', 'Mid. Full Stack Developer') },
+   { t: 'Creative & Media', c: q(Q2, 'Graphic Designer', 'Videographer & Editor', 'AI Editor', 'Indo Creative Strategist', 'Social Media Specialist', 'Ads Creative Strategist', 'Brand Communications') }],
+  [{ t: 'Management', c: q(Q3, 'Associate Product Management', 'Account Manager', 'Corporate Strategist', 'Business Strategy Associate', 'Senior Talent Strategy Consulting Analyst', 'Head of New Technology & Digitalization') },
+   { t: 'Legal & Compliance', c: q(Q3, 'Corporate Legal Senior Officer', 'Legal Counsel', 'Jr. Associate - Corporate', 'Compliance - Corporate Risk', 'Lawyer, Marine Biodiversity Conservation', 'Principal ITGRC Program Manager') }],
+  [{ t: 'Human Resources', c: q(Q4, 'Talent Acquisition Specialist', 'Human Capital', 'Human Resources Generalist', 'Human Resources Officer', 'Employee Relation Specialist Intern') },
+   { t: 'Operations & Supply Chain', c: q(Q3, 'Michelin Supply Chain APAC', 'Logistic Operation', 'Logistics Technician', 'Jr. Consultant - Supply Chain & Operations', 'Supply Chain Planning Analyst (Planner)', 'Supply Chain & Engineering Consultant') }],
+];
+const flink = k => `<a class="fl ${FT[k][2]}" role="button" tabindex="0"><span class="fico">${ico(FT[k][0])}</span><span>${FT[k][1]}</span></a>`;
+const qCard = (x, j) => `<article class="as-card q-card" style="--j:${j}"><div class="as-top"><h4>${x[0]}</h4><a class="ed" role="button" tabindex="0">Edit</a></div>
+  <p class="q-lab">File Test</p>${x[1].map(flink).join('')}<p class="q-lab up">Upload File Test</p><div class="q-send"><button class="send">Send To</button></div></article>`;
+function renderQuestions() {
+  $('#asCols').dataset.v = 'q'; let n = 0;
+  $('#asCols').innerHTML = QUEST.map(col => `<div class="as-col">${col.map(s => `<section class="as-sec q" style="--i:${n++}"><div class="as-h"><i class="dot"></i><h3>${s.t}</h3></div>
+    <div class="as-list">${s.c.slice(0, 2).map(x => qCard(x, 0)).join('')}</div><div class="as-extra"><div class="as-inner">${s.c.slice(2).map((x, j) => qCard(x, j)).join('')}</div></div>
+    <button class="see"><span>See More</span>${ico('chevron-down')}</button></section>`).join('')}</div>`).join('');
+  bindSee(); afterRender();
+}
+let asView = 'a';
+function setView(v) {
+  if (v === asView) return; asView = v;
+  $('#tabAs').classList.toggle('is-on', v === 'a'); $('#tabQ').classList.toggle('is-on', v === 'q');
+  const c = $('#asCols'); c.classList.add('swap');
+  setTimeout(() => { (v === 'a' ? renderAssessments : renderQuestions)(); c.classList.remove('swap'); }, 180);
+}
+function buildAssess() {
+  $('#page-assessments').innerHTML = `<div class="card list-card jobs-card"><div class="lc-head"><h2 class="lc-title">All Assessments &amp; <span>Tests</span></h2>
+    <div class="lc-tools"><button class="lc-btn is-on" id="tabAs">${ico('clipboard')}Assessments &amp; Tests</button><button class="lc-btn" id="tabQ">${ico('question')}Questions</button><button class="lc-btn">${ico('plus-circle')}Create Section</button></div></div>
+    <div class="as-scroll"><div class="as-cols" id="asCols"></div></div></div>`;
+  renderAssessments();
+  $('#tabAs').addEventListener('click', () => setView('a')); $('#tabQ').addEventListener('click', () => setView('q'));
+}
+
 function buildPages() {
   const dd = `<button class="lc-btn" style="gap:14px">${ico('folder')}Category Job${ico('chevron-down')}</button>`;
   $('#page-resume').innerHTML = `<div class="card list-card"><div class="lc-head"><h2 class="lc-title">All Candidate's <span>Resume</span></h2>
@@ -184,7 +254,7 @@ function buildPages() {
 }
 
 /* ===== ROUTER ===== */
-const PAGES = { dashboard: 'Dashboard', resume: "Candidate's Resume", jobs: 'Job Openings', interviews: 'Interviews & Schedule' };
+const PAGES = { dashboard: 'Dashboard', resume: "Candidate's Resume", jobs: 'Job Openings', interviews: 'Interviews & Schedule', assessments: 'Assessments & Tests' };
 const ORDER = Object.keys(PAGES);
 let current = 'dashboard', busy = false;
 
@@ -219,9 +289,10 @@ function refreshPage() {
   else if (current === 'resume') renderResumes();
   else if (current === 'interviews') renderInterviews();
   else if (current === 'jobs') renderJobs();
+  else if (current === 'assessments') (asView === 'a' ? renderAssessments : renderQuestions)();
 }
 
-buildPages(); buildCreate();
+buildPages(); buildAssess(); buildCreate();
 document.querySelectorAll('.nav-item[data-page]').forEach(n => n.addEventListener('click', () => showPage(n.dataset.page)));
 window.addEventListener('hashchange', () => showPage(location.hash.slice(1)));
 if (PAGES[location.hash.slice(1)]) showPage(location.hash.slice(1), false);

@@ -9,7 +9,7 @@ const NAV = [
   { t: "Candidate's Resume", i: 'resume', badge: '99+', page: 'resume' },
   { t: 'Job Openings', i: 'folder', page: 'jobs' },
   { t: 'Interviews & Schedule', i: 'interview', page: 'interviews' },
-  { t: 'Assessments & Tests', i: 'assessment' },
+  { t: 'Assessments & Tests', i: 'assessment', page: 'assessments' },
   { t: 'Analytics / Hiring Metrics', i: 'analytics' },
   { label: 'MANAGE' },
   { t: 'Notification', i: 'bell', badge: '99+' },
@@ -33,12 +33,12 @@ const DONUT_ORDER = [0, 1, 3, 2];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const INTERVIEW = [1,.944,.904,1,.969,.994,.994,.907,.994,.972,1,0];   // tinggi bar abu (0-1 dari 356px)
 const ONBOARD   = [26,29,26,20,23,20,6,23,11,26,14,4];                // tinggi bar hijau (px)
-const SCHEDULE = [
-  ['christopher','Christopher J..','Sr. UI/UX Desig...','Microsoft Teams','On Progress'],
-  ['cathrine','Cathrine Vini...','Sr. UI/UX Desig...','Microsoft Teams','On Progress'],
-  ['david','David Costa','Front-End Deve...','Google Meeting','Reschedule'],
-  ['michalle','Michalle Mqa...','Front-End Deve...','Microsoft Teams','On Progress'],
-  ['manuel','Manuel De La...','Front-End Deve...','Google Meeting','On Progress'],
+const SCHEDULE = [   // nama & posisi ditulis lengkap; CSS yang memotong (…) hanya kalau kolomnya sempit
+  ['christopher','Christopher Javier','Sr. UI/UX Designer','Microsoft Teams','On Progress'],
+  ['cathrine','Cathrine Vinicha','Sr. UI/UX Designer','Microsoft Teams','On Progress'],
+  ['david','David Costa','Front-End Developer','Google Meeting','Reschedule'],
+  ['michalle','Michalle Mqawni','Front-End Developer','Microsoft Teams','On Progress'],
+  ['manuel','Manuel De La Vueza','Front-End Developer','Google Meeting','On Progress'],
 ];
 
 /* Placeholder abu-abu hanya untuk gambar yang belum ada; begitu file berhasil dimuat, latar dihapus */
@@ -158,7 +158,6 @@ function play() {
 }
 
 /* ===== INIT & INTERAKSI ===== */
-/* skala canvas desain (2382px) ke lebar layar */
 const DESIGN_W = 2382, appEl = document.querySelector('.app');
 const fit = () => { appEl.style.zoom = window.innerWidth / DESIGN_W; };
 fit(); window.addEventListener('resize', fit);
@@ -169,7 +168,6 @@ $('#refreshBtn').addEventListener('click', e => {
   const b = e.currentTarget; b.classList.remove('spin'); void b.offsetWidth; b.classList.add('spin'); refreshPage();
 });
 $('#collapseBtn').addEventListener('click', () => document.querySelector('.app').classList.toggle('collapsed'));
-/* Dark mode: semua elemen berganti serentak (transisi per-elemen dimatikan sementara, lalu di-crossfade 1 kali) */
 $('#darkToggle').addEventListener('click', () => {
   const b = document.body;
   const swap = () => { b.classList.add('no-trans'); b.classList.toggle('dark'); applyIcons(); };
