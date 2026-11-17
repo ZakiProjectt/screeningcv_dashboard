@@ -34,11 +34,11 @@ function renderResumes() {
   afterRender();
 }
 function renderInterviews() {
-  $('#intRows').innerHTML = INTERVIEWS.map((r, i) => `<div class="lc-row g-int" style="--i:${i}">
-    <div class="who">${img(PEOPLE(INT_SLUG[i]))}<span class="nm">${r[0]}</span></div><span>${r[1]}</span><span>${r[2]}</span>
+  $('#intRows').innerHTML = INTERVIEWS.map((r, i) => `<div class="lc-row g-int" style="--i:${i}" data-i="${i}">
+    <div class="who">${img(PEOPLE(INT_SLUG[i]))}<span class="nm">${r[0]}</span></div><span>${r[1]}</span><span class="stp">${r[2]}</span>
     <span class="st-${r[3]}">${r[3] === 'p' ? 'On Progress' : 'Reschedule'}</span>
     <div class="ivs">${r[4].map(n => img(PEOPLE('interviewer-' + n))).join('')}</div>
-    <span><button class="view-btn">View</button></span><span><button class="kebab" aria-label="Decision"></button></span></div>`).join('')
+    <span><button class="view-btn" data-view="${i}">View</button></span><span><button class="kebab" aria-label="Decision"></button></span></div>`).join('')
     + '<button class="more">More Resume</button>';
   afterRender();
 }
@@ -230,6 +230,54 @@ function buildAssess() {
   $('#tabAs').addEventListener('click', () => setView('a')); $('#tabQ').addEventListener('click', () => setView('q'));
 }
 
+/* ===== INTERVIEWS: tooltip saat hover + popup file kandidat ===== */
+const PHONES = ['+1-989-555-777','+1-989-555-318','+1-212-555-204','+1-415-555-926','+1-646-555-143','+1-310-555-672','+1-989-555-481','+1-212-555-835','+1-415-555-259','+1-646-555-760','+1-310-555-398','+1-989-555-614','+1-212-555-087','+1-415-555-523','+1-646-555-941','+1-310-555-206','+1-989-555-359','+1-212-555-748'];
+const STEP_NAME = { '3/5': 'Interview User', '4/5': 'Presentation Take home test' };
+const cInfo = i => { const n = INTERVIEWS[i][0], w = n.split(' '), f = w[0], l = w[w.length - 1];
+  return { n, f, l, mail: `${f}.${l}`.toLowerCase() + '@gmail.com', phone: PHONES[i], plat: INT_PLATS[i] || PLATFORMS[0], slug: INT_SLUG[i] }; };
+const zoomNow = () => parseFloat(appEl.style.zoom) || 1;
+const tip = document.createElement('div'); tip.className = 'tip'; document.body.append(tip);
+function tipPos(e) {
+  const z = zoomNow(); tip.style.zoom = z; const r = tip.getBoundingClientRect();
+  let x = e.clientX + 16, y = e.clientY + 20;
+  if (x + r.width > innerWidth - 10) x = e.clientX - 16 - r.width;
+  if (y + r.height > innerHeight - 10) y = e.clientY - 20 - r.height;
+  tip.style.left = x / z + 'px'; tip.style.top = y / z + 'px';
+}
+const vwScrim = document.createElement('div'); vwScrim.className = 'vw-scrim'; vwScrim.innerHTML = '<div class="vw"></div>'; document.body.append(vwScrim);
+let vwBtn = null;
+function openFiles(i, btn) {
+  const c = cInfo(i), vw = vwScrim.firstChild; vw.style.zoom = zoomNow();
+  const files = [['file-pdf', `${c.f}${c.l}.pdf`, ''], ['file-behance', 'behance.net/gallery/Portfolio2026', 'behance.net/gallery/Portfolio2026'], ['link', `${c.f}${c.l}.framer.website`.toLowerCase(), `${c.f}${c.l}.framer.website`.toLowerCase()]];
+  vw.innerHTML = `<div class="vw-head">${img(PEOPLE(c.slug))}<div><b>${c.n}</b><small>${c.mail}</small></div></div><div class="vw-rows">${files.map((f, k) => `<div class="vw-row" style="--k:${k}"><span class="vw-ic">${ico(f[0])}</span><div class="vw-box">${f[1]}</div><button class="vw-btn" data-u="${f[2]}">View</button></div>`).join('')}</div>`;
+  if (document.body.classList.contains('dark')) applyIcons(); markOk();
+  tip.classList.remove('show'); if (vwBtn) vwBtn.classList.remove('act'); vwBtn = btn; btn.classList.add('act');
+  vwScrim.classList.add('show');
+}
+function closeFiles() { vwScrim.classList.remove('show'); if (vwBtn) vwBtn.classList.remove('act'); vwBtn = null; }
+function bindInterviews() {
+  const box = $('#intRows');
+  box.addEventListener('mouseover', e => {
+    const row = e.target.closest('.lc-row'), w = e.target.closest('.who'), s = e.target.closest('.stp'); if (!row || (!w && !s)) return;
+    const i = +row.dataset.i, key = (w ? 'c' : 's') + i, c = cInfo(i);
+    if (tip.dataset.k !== key) {
+      tip.innerHTML = w ? `<div class="tip-r">${ico('phone')}<span>${c.phone}</span></div><div class="tip-r">${ico('mail')}<span>${c.mail}</span></div>`
+        : `<ul><li>${STEP_NAME[INTERVIEWS[i][2]] || 'Interview User'}</li><li>Platform: ${c.plat}</li></ul>`;
+      tip.dataset.k = key; if (document.body.classList.contains('dark')) applyIcons(); markOk();
+    }
+    tip.classList.add('show'); tipPos(e);
+  });
+  box.addEventListener('mousemove', e => { if (tip.classList.contains('show')) tipPos(e); });
+  box.addEventListener('mouseout', e => { const t = e.target.closest('.who,.stp'); if (t && !t.contains(e.relatedTarget)) { tip.classList.remove('show'); tip.dataset.k = ''; } });
+  box.addEventListener('scroll', () => { tip.classList.remove('show'); tip.dataset.k = ''; });
+  box.addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (b) openFiles(+b.dataset.view, b); });
+  vwScrim.addEventListener('click', e => {
+    if (e.target === vwScrim) closeFiles();
+    const u = e.target.closest('.vw-btn'); if (u && u.dataset.u) window.open('https://' + u.dataset.u, '_blank', 'noopener');
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFiles(); });
+}
+
 function buildPages() {
   const dd = `<button class="lc-btn" style="gap:14px">${ico('folder')}Category Job${ico('chevron-down')}</button>`;
   $('#page-resume').innerHTML = `<div class="card list-card"><div class="lc-head"><h2 class="lc-title">All Candidate's <span>Resume</span></h2>
@@ -292,7 +340,7 @@ function refreshPage() {
   else if (current === 'assessments') (asView === 'a' ? renderAssessments : renderQuestions)();
 }
 
-buildPages(); buildAssess(); buildCreate();
+buildPages(); buildAssess(); buildCreate(); bindInterviews();
 document.querySelectorAll('.nav-item[data-page]').forEach(n => n.addEventListener('click', () => showPage(n.dataset.page)));
 window.addEventListener('hashchange', () => showPage(location.hash.slice(1)));
 if (PAGES[location.hash.slice(1)]) showPage(location.hash.slice(1), false);

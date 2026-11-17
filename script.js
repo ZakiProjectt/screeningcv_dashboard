@@ -1,6 +1,6 @@
 /* ===== DATA (ganti / sambungkan ke API nanti) ===== */
 // icon berwarna / sama di kedua tema -> assets/icons/ ; icon hitam-putih -> assets/icons/light/ atau /dark/
-const SHARED = new Set(['logo', 'bell-white', 'doc', 'block', 'hold', 'x-red']);
+const SHARED = new Set(['logo', 'bell-white', 'doc', 'block', 'hold', 'x-red', 'file-pdf', 'file-behance']);
 const ICON = n => SHARED.has(n) ? `assets/icons/${n}.svg` : `assets/icons/light/${n}.svg`;
 const AV = n => `assets/img/${n}.jpg`;
 const NAV = [
@@ -40,6 +40,10 @@ const SCHEDULE = [   // nama & posisi ditulis lengkap; CSS yang memotong (…) h
   ['michalle','Michalle Mqawni','Front-End Developer','Microsoft Teams','On Progress'],
   ['manuel','Manuel De La Vueza','Front-End Developer','Google Meeting','On Progress'],
 ];
+// 3 platform wawancara, dibagi acak tapi tetap (tidak berubah tiap refresh). Urutan = urutan kandidat di halaman Interviews & Schedule.
+const PLATFORMS = ['Microsoft Teams', 'Google Meeting', 'Zoom Meeting'];
+const INT_PLATS = ['Microsoft Teams','Zoom Meeting','Google Meeting','Zoom Meeting','Microsoft Teams','Google Meeting','Zoom Meeting','Microsoft Teams','Google Meeting','Zoom Meeting','Microsoft Teams','Google Meeting','Microsoft Teams','Zoom Meeting','Google Meeting','Zoom Meeting','Microsoft Teams','Google Meeting'];
+SCHEDULE.forEach((r, i) => { r[3] = INT_PLATS[i]; });
 
 /* Placeholder abu-abu hanya untuk gambar yang belum ada; begitu file berhasil dimuat, latar dihapus */
 const markOk = () => document.querySelectorAll('img:not(.ok)').forEach(i => { if (i.complete && i.naturalWidth) i.classList.add('ok'); });
@@ -158,6 +162,7 @@ function play() {
 }
 
 /* ===== INIT & INTERAKSI ===== */
+/* skala canvas desain (2382px) ke lebar layar */
 const DESIGN_W = 2382, appEl = document.querySelector('.app');
 const fit = () => { appEl.style.zoom = window.innerWidth / DESIGN_W; };
 fit(); window.addEventListener('resize', fit);
@@ -168,6 +173,7 @@ $('#refreshBtn').addEventListener('click', e => {
   const b = e.currentTarget; b.classList.remove('spin'); void b.offsetWidth; b.classList.add('spin'); refreshPage();
 });
 $('#collapseBtn').addEventListener('click', () => document.querySelector('.app').classList.toggle('collapsed'));
+/* Dark mode: semua elemen berganti serentak (transisi per-elemen dimatikan sementara, lalu di-crossfade 1 kali) */
 $('#darkToggle').addEventListener('click', () => {
   const b = document.body;
   const swap = () => { b.classList.add('no-trans'); b.classList.toggle('dark'); applyIcons(); };
