@@ -24,21 +24,26 @@ const RES_SLUG = slugs(RESUMES), INT_SLUG = slugs(INTERVIEWS);
 const img = (src, cls = 'avatar') => `<img class="${cls}" src="${src}" alt="">`;
 const ico = n => `<img class="ico" src="${ICON(n)}" alt="">`;
 let catFilter = null;
+SHARED.add('whatsapp'); SHARED.add('gmail');             // logo berwarna: assets/icons/whatsapp.svg & assets/icons/gmail.svg
+const DEC = {};                                          // keputusan per kandidat. Kunci 'i3' (Interviews) / 'r5' (Resume) -> { d: 'c'|'h'|'x', via: null|'WhatsApp'|'Gmail' }
+const DEC_LABEL = { c: 'Continued', h: 'On Hold', x: 'Rejected' };
+const decCls = k => DEC[k] ? ' d-' + DEC[k].d : '';
+const stCell = (i, s) => { const d = DEC['i' + i]; return d ? `<span class="st-${d.d}">${DEC_LABEL[d.d]}</span>` : `<span class="st-${s}">${s === 'p' ? 'On Progress' : 'Reschedule'}</span>`; };
 
 function renderResumes() {
-  const rows = RESUMES.map((r, i) => ({ r, s: RES_SLUG[i] })).filter(x => !catFilter || x.r[1] === catFilter);
+  const rows = RESUMES.map((r, i) => ({ r, s: RES_SLUG[i], n: i })).filter(x => !catFilter || x.r[1] === catFilter);
   $('#resRows').innerHTML = (rows.length ? rows.map((x, i) => `<div class="lc-row g-res" style="--i:${i}">
     <div class="who">${img(PEOPLE(x.s))}<span class="nm">${x.r[0]}</span></div><span>${x.r[1]}</span>
-    <span><button class="view-btn">View</button></span><span>${x.r[2]} - ${x.r[3]}</span><span><button class="kebab" aria-label="Decision"></button></span></div>`).join('')
+    <span><button class="view-btn">View</button></span><span>${x.r[2]} - ${x.r[3]}</span><span><button class="kebab${decCls('r' + x.n)}" data-dec="r${x.n}" aria-label="Decision"></button></span></div>`).join('')
     + '<button class="more">More Resume</button>' : '<div class="empty">Tidak ada resume untuk kategori ini</div>');
   afterRender();
 }
 function renderInterviews() {
   $('#intRows').innerHTML = INTERVIEWS.map((r, i) => `<div class="lc-row g-int" style="--i:${i}" data-i="${i}">
     <div class="who">${img(PEOPLE(INT_SLUG[i]))}<span class="nm">${r[0]}</span></div><span>${r[1]}</span><span class="stp">${r[2]}</span>
-    <span class="st-${r[3]}">${r[3] === 'p' ? 'On Progress' : 'Reschedule'}</span>
+    ${stCell(i, r[3])}
     <div class="ivs">${r[4].map(n => img(PEOPLE('interviewer-' + n))).join('')}</div>
-    <span><button class="view-btn" data-view="${i}">View</button></span><span><button class="kebab" aria-label="Decision"></button></span></div>`).join('')
+    <span><button class="view-btn" data-view="${i}">View</button></span><span><button class="kebab${decCls('i' + i)}" data-dec="i${i}" aria-label="Decision"></button></span></div>`).join('')
     + '<button class="more">More Resume</button>';
   afterRender();
 }
@@ -249,7 +254,7 @@ let vwBtn = null;
 function openFiles(i, btn) {
   const c = cInfo(i), vw = vwScrim.firstChild; vw.style.zoom = zoomNow();
   const files = [['file-pdf', `${c.f}${c.l}.pdf`, ''], ['file-behance', 'behance.net/gallery/Portfolio2026', 'behance.net/gallery/Portfolio2026'], ['link', `${c.f}${c.l}.framer.website`.toLowerCase(), `${c.f}${c.l}.framer.website`.toLowerCase()]];
-  vw.innerHTML = `<div class="vw-head">${img(PEOPLE(c.slug))}<div><b>${c.n}</b><small>${c.mail}</small></div></div><div class="vw-rows">${files.map((f, k) => `<div class="vw-row" style="--k:${k}"><span class="vw-ic">${ico(f[0])}</span><div class="vw-box">${f[1]}</div><button class="vw-btn" data-u="${f[2]}">View</button></div>`).join('')}</div>`;
+  vw.innerHTML = `<button class="vw-x" aria-label="Close">${ico('close')}</button><div class="vw-head">${img(PEOPLE(c.slug))}<div><b>${c.n}</b><small>${c.mail}</small></div></div><div class="vw-rows">${files.map((f, k) => `<div class="vw-row" style="--k:${k}"><span class="vw-ic">${ico(f[0])}</span><div class="vw-box">${f[1]}</div><button class="vw-btn" data-u="${f[2]}">View</button></div>`).join('')}</div>`;
   if (document.body.classList.contains('dark')) applyIcons(); markOk();
   tip.classList.remove('show'); if (vwBtn) vwBtn.classList.remove('act'); vwBtn = btn; btn.classList.add('act');
   vwScrim.classList.add('show');
@@ -272,10 +277,70 @@ function bindInterviews() {
   box.addEventListener('scroll', () => { tip.classList.remove('show'); tip.dataset.k = ''; });
   box.addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (b) openFiles(+b.dataset.view, b); });
   vwScrim.addEventListener('click', e => {
-    if (e.target === vwScrim) closeFiles();
+    if (e.target === vwScrim || e.target.closest('.vw-x')) closeFiles();
     const u = e.target.closest('.vw-btn'); if (u && u.dataset.u) window.open('https://' + u.dataset.u, '_blank', 'noopener');
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFiles(); });
+}
+
+/* ===== DECISION: klik titik 3 -> putuskan Continued / On Hold / Rejected -> kabari kandidat via WhatsApp / Gmail ===== */
+const DC_OPT = [['c', 'Continued'], ['h', 'On Hold'], ['x', 'Rejected']];
+const DC_CH = [['WhatsApp', 'whatsapp'], ['Gmail', 'gmail']];
+const DC_ASK = 'Send an update on the status of the application:';
+const dcScrim = document.createElement('div'); dcScrim.className = 'dc-scrim'; dcScrim.innerHTML = '<div class="dc" role="dialog" aria-modal="true" aria-labelledby="dcName"></div>'; document.body.append(dcScrim);
+let dcKey = null, dcBtn = null, dcBusy = false;
+function dcPerson(key) {      // data kandidat dari daftar Interviews ('i..') atau Resume ('r..')
+  const t = key[0], i = +key.slice(1), n = (t === 'i' ? INTERVIEWS : RESUMES)[i][0], w = n.split(' '), f = w[0], l = w[w.length - 1];
+  return { n, mail: `${f}.${l}`.toLowerCase() + '@gmail.com', pdf: `${f}${l}.pdf`, slug: (t === 'i' ? INT_SLUG : RES_SLUG)[i] };
+}
+function paintDecision(key) {      // update baris di belakang popup tanpa render ulang (animasi baris tidak mengulang)
+  const d = DEC[key], k = document.querySelector(`.kebab[data-dec="${key}"]`); if (!d || !k) return;
+  k.classList.remove('d-c', 'd-h', 'd-x'); k.classList.add('d-' + d.d); k.setAttribute('aria-label', 'Decision: ' + DEC_LABEL[d.d]);
+  if (key[0] === 'i') { const s = k.closest('.lc-row').querySelector('[class^="st-"]'); if (s) { s.className = 'st-' + d.d; s.textContent = DEC_LABEL[d.d]; } }
+}
+function openDecision(key, btn) {
+  const p = dcPerson(key), cur = DEC[key], dc = dcScrim.firstChild;
+  dcKey = key; dcBusy = false; dc.style.zoom = zoomNow(); dc.className = 'dc' + (cur ? ' decided' : '');
+  dc.innerHTML = `<button class="dc-x" aria-label="Close">${ico('close')}</button>
+    <div class="dc-head">${img(PEOPLE(p.slug))}<div><b id="dcName">${p.n}</b><small>${p.mail}</small></div></div>
+    <div class="dc-file">${ico('file-pdf')}<span>${p.pdf}</span></div>
+    <div class="dc-opts">${DC_OPT.map(([k, t]) => `<button class="dc-opt o-${k}${cur && cur.d === k ? ' sel' : ''}" data-d="${k}">${t}</button>`).join('')}</div>
+    <div class="dc-notify"><div class="dc-ni"><p>${cur && cur.via ? `Last update sent via ${cur.via}. Send another:` : DC_ASK}</p>
+      <div class="dc-chs">${DC_CH.map(([t, ic], n) => `<button class="dc-ch${n ? '' : ' pri'}" data-ch="${t}"><span class="dc-chi">${ico(ic)}</span><span class="dc-cht">${t}</span></button>`).join('')}</div></div></div>`;
+  if (document.body.classList.contains('dark')) applyIcons(); markOk();
+  tip.classList.remove('show'); tip.dataset.k = '';
+  if (dcBtn) dcBtn.classList.remove('act'); dcBtn = btn; btn.classList.add('act');
+  dcScrim.classList.add('show');
+  setTimeout(() => { const f = dc.querySelector('.dc-opt.sel') || dc.querySelector('.dc-opt'); if (f) f.focus({ preventScroll: true }); }, 350);
+}
+function closeDecision() {
+  if (dcBusy || !dcScrim.classList.contains('show')) return;
+  const d = DEC[dcKey], b = dcBtn; dcScrim.classList.remove('show'); dcBtn = null;
+  if (b) { b.classList.remove('act'); b.focus({ preventScroll: true }); }
+  if (d && !d.via) toast('Decision saved. Candidate not notified yet');      // jangan biarkan kandidat menggantung
+}
+function pickDecision(d) {
+  const dc = dcScrim.firstChild, prev = DEC[dcKey];
+  if (!prev || prev.d !== d) { DEC[dcKey] = { d, via: null }; dc.querySelector('.dc-ni p').textContent = DC_ASK; }
+  dc.classList.add('decided');
+  dc.querySelectorAll('.dc-opt').forEach(b => b.classList.toggle('sel', b.dataset.d === d));
+  paintDecision(dcKey);
+}
+function sendUpdate(ch) {
+  const dc = dcScrim.firstChild, b = dc.querySelector(`[data-ch="${ch}"]`), key = dcKey, p = dcPerson(key);
+  dcBusy = true; dc.classList.add('sending'); b.classList.add('go'); b.querySelector('.dc-cht').textContent = 'Sending…';
+  // TODO: sambungkan ke WhatsApp API / Gmail API di sini (kirim template sesuai DEC[key].d ke p.mail / nomor kandidat)
+  setTimeout(() => { DEC[key].via = ch; dcBusy = false; closeDecision(); toast(`Update sent via ${ch} to ${p.n}`); }, 900);
+}
+function bindDecision() {
+  ['#intRows', '#resRows'].forEach(s => $(s).addEventListener('click', e => { const k = e.target.closest('.kebab'); if (k && k.dataset.dec) openDecision(k.dataset.dec, k); }));
+  dcScrim.addEventListener('click', e => {
+    if (e.target === dcScrim || e.target.closest('.dc-x')) return closeDecision();
+    if (dcBusy) return;
+    const o = e.target.closest('.dc-opt'), c = e.target.closest('.dc-ch');
+    if (o) pickDecision(o.dataset.d); else if (c) sendUpdate(c.dataset.ch);
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDecision(); });
 }
 
 function buildPages() {
@@ -340,7 +405,88 @@ function refreshPage() {
   else if (current === 'assessments') (asView === 'a' ? renderAssessments : renderQuestions)();
 }
 
-buildPages(); buildAssess(); buildCreate(); bindInterviews();
+buildPages(); buildAssess(); buildCreate(); bindInterviews(); bindDecision();
 document.querySelectorAll('.nav-item[data-page]').forEach(n => n.addEventListener('click', () => showPage(n.dataset.page)));
 window.addEventListener('hashchange', () => showPage(location.hash.slice(1)));
 if (PAGES[location.hash.slice(1)]) showPage(location.hash.slice(1), false);
+
+/* ===== JAM REAL-TIME (WIB / Asia/Jakarta) — header "Wednesday, November 26 - 09.25 AM" ===== */
+const CLOCK = { tz: 'Asia/Jakarta', seconds: false };          // seconds:true -> "09.25.41 AM"; ganti tz kalau mau zona waktu lain
+const wibFmt = new Intl.DateTimeFormat('en-US', { timeZone: CLOCK.tz, weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+const wib = () => Object.fromEntries(wibFmt.formatToParts(new Date()).filter(p => p.type !== 'literal').map(p => [p.type, p.value]));
+function tickClock() {
+  const t = wib(), el = $('.hello p'), html = `${t.weekday}, <b>${t.month} ${t.day} - ${t.hour}.${t.minute}${CLOCK.seconds ? '.' + t.second : ''} ${t.dayPeriod}</b>`;
+  if (el.dataset.t !== html) { el.innerHTML = html; el.dataset.t = html; }      // hanya sentuh DOM kalau teksnya berubah
+}
+tickClock(); setInterval(tickClock, 1000);
+
+/* ===== NOTES (sidebar): Add Notes -> kartu hijau, bisa diketik, "/" untuk command, × untuk hapus, tersimpan di browser ===== */
+const NOTE_KEY = 'cvscreening.notes', NOTE_DEF = 'New Notes';
+const NOTE_MAX = 3, NOTE_H = { min: 172, max: 260 };      // maksimal jumlah catatan & rentang tinggi kartu (px); lewat batas tinggi -> teks scroll di dalam kartu
+const wibDate = t => `${t.day} ${t.month.slice(0, 3)} ${t.year}, ${t.hour}.${t.minute} ${t.dayPeriod} WIB`;
+const NOTE_CMD = [      // [label, teks yang disisipkan]
+  ['Schedule', () => { const t = wib(); return `Schedule: ${t.weekday.slice(0, 3)}, ${wibDate(t)}`; }],
+  ['To-do', () => '[ ] '],
+  ['Date & time', () => wibDate(wib())],
+];
+let notes = []; try { notes = JSON.parse(localStorage.getItem(NOTE_KEY)) || []; } catch (e) {}
+const saveNotes = () => { try { localStorage.setItem(NOTE_KEY, JSON.stringify(notes)); } catch (e) {} };
+const notesBox = document.createElement('div'); notesBox.className = 'notes'; notesBox.id = 'notes'; $('.add-notes').after(notesBox);
+const syncNotes = () => notesBox.classList.toggle('has', notes.length > 0);
+
+function noteEl(n) {
+  const w = document.createElement('div'); w.className = 'note-w';
+  w.innerHTML = `<div class="note-i"><div class="note-pad"><article class="note"><button class="note-x" aria-label="Delete note"></button>
+    <input class="note-t" maxlength="40" placeholder="${NOTE_DEF}" autocomplete="off" aria-label="Note title"><textarea class="note-b" placeholder="Press ‘/’ for commands" aria-label="Note"></textarea>
+    <div class="note-menu" role="listbox"></div></article></div></div>`;
+  const ti = w.querySelector('.note-t'), ta = w.querySelector('.note-b'), menu = w.querySelector('.note-menu');
+  ti.value = n.t; ta.value = n.b;
+  const card = w.querySelector('.note');
+  w.fit = instant => {      // tinggi kartu ngikutin isi: 172px -> maks 260px
+    if (instant) card.style.transition = 'none';
+    ta.style.height = '0px'; const need = ta.scrollHeight; ta.style.height = '';
+    card.style.height = Math.min(NOTE_H.max, Math.max(NOTE_H.min, 68 + need + 16)) + 'px';
+    if (instant) { void card.offsetHeight; card.style.transition = ''; }
+  };
+  let items = [], sel = 0;
+  const closeMenu = () => { menu.classList.remove('open'); items = []; };
+  const drawMenu = () => { menu.innerHTML = items.map((c, i) => `<button type="button" role="option" class="${i === sel ? 'sel' : ''}" data-c="${NOTE_CMD.indexOf(c)}">${c[0]}</button>`).join(''); };
+  const letters = s => s.toLowerCase().replace(/[^a-z]/g, '');
+  const trigger = () => {      // "/" di awal baris atau setelah spasi membuka menu; huruf sesudahnya menyaring
+    const m = ta.value.slice(0, ta.selectionStart).match(/(^|\s)\/([\w-]*)$/); if (!m) return closeMenu();
+    items = NOTE_CMD.filter(c => letters(c[0]).startsWith(letters(m[2]))); if (!items.length) return closeMenu();
+    sel = 0; drawMenu(); menu.classList.add('open');
+  };
+  const run = c => {
+    const pos = ta.selectionStart, start = ta.value.slice(0, pos).lastIndexOf('/'), txt = c[1]();
+    ta.value = ta.value.slice(0, start) + txt + ta.value.slice(pos);
+    ta.setSelectionRange(start + txt.length, start + txt.length); ta.focus(); closeMenu(); n.b = ta.value; saveNotes(); w.fit();
+  };
+  ta.addEventListener('input', () => { n.b = ta.value; saveNotes(); w.fit(); trigger(); });
+  ta.addEventListener('keydown', e => {
+    if (e.key === '/') e.stopPropagation();                   // jangan ikut shortcut "/" = fokus Search
+    if (!menu.classList.contains('open')) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); sel = (sel + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length; drawMenu(); }
+    else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); run(items[sel]); }
+    else if (e.key === 'Escape') { e.stopPropagation(); closeMenu(); }
+  });
+  ta.addEventListener('blur', () => setTimeout(closeMenu, 120));
+  menu.addEventListener('mousedown', e => e.preventDefault());   // klik menu tidak membuat textarea kehilangan fokus
+  menu.addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) run(NOTE_CMD[+b.dataset.c]); });
+  ti.addEventListener('input', () => { n.t = ti.value; saveNotes(); });
+  ti.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ta.focus(); } });
+  w.querySelector('.note-x').addEventListener('click', () => {
+    notes = notes.filter(x => x !== n); saveNotes(); w.classList.remove('in');
+    setTimeout(() => { w.remove(); syncNotes(); }, 420); toast('Note deleted');
+  });
+  return w;
+}
+notes = notes.slice(0, NOTE_MAX); notes.forEach(n => { if (n.t === NOTE_DEF) n.t = ''; });      // catatan lama yang judulnya masih bawaan -> jadi placeholder
+notes.forEach(n => { const w = noteEl(n); w.classList.add('in'); notesBox.append(w); w.fit(true); }); syncNotes();
+if (document.fonts) document.fonts.ready.then(() => notesBox.querySelectorAll('.note-w').forEach(w => w.fit(true)));   // ukur ulang setelah font Onest termuat
+$('.add-notes').addEventListener('click', () => {
+  if (notes.length >= NOTE_MAX) return toast(`Maximum ${NOTE_MAX} notes`);
+  const n = { t: '', b: '' }; notes.unshift(n); saveNotes();
+  const w = noteEl(n); notesBox.prepend(w); syncNotes(); void w.offsetWidth; w.classList.add('in'); notesBox.scrollTop = 0;
+  setTimeout(() => w.querySelector('.note-b').focus({ preventScroll: true }), 420);
+});
