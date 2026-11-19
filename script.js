@@ -10,7 +10,7 @@ const NAV = [
   { t: 'Job Openings', i: 'folder', page: 'jobs' },
   { t: 'Interviews & Schedule', i: 'interview', page: 'interviews' },
   { t: 'Assessments & Tests', i: 'assessment', page: 'assessments' },
-  { t: 'Analytics / Hiring Metrics', i: 'analytics' },
+  { t: 'Analytics & Hiring Metrics', i: 'analytics', page: 'analytics' },
   { label: 'MANAGE' },
   { t: 'Notification', i: 'bell', badge: '99+' },
   { t: 'Dark Mode', i: 'moon', toggle: true },

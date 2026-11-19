@@ -366,8 +366,142 @@ function buildPages() {
   document.addEventListener('click', () => box.classList.remove('open'));
 }
 
+/* ===== ANALYTICS / HIRING METRICS — On Boarding Metrics (new hires bulan ke bulan, 2026) ===== */
+const OB = {
+  months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  hires:  [5, 7, 6, 5, 6, 5, 1, 6, 2, 7, 4, 2],      // jumlah new hires per bulan. Desember = nilai sementara (hanya untuk garis pudar), ganti dengan data asli / API
+  W: 638, H: 558, x0: 52, dx: 267, top: 114, base: 317, U: 19,   // geometri kartu (px): x0 = titik kiri, dx = jarak antar bulan, top/base = garis putus-putus, U = tinggi per 1 hire
+};
+const obRnd = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+OB.series = (() => {      // 4 titik per bulan (mingguan) supaya garisnya berlekuk halus seperti di desain; nilai bulan tetap persis sama dengan data
+  const s = [];
+  for (let m = 0; m < 11; m++) { const A = OB.hires[m], B = OB.hires[m + 1];
+    for (let k = 0; k < 4; k++) { const t = k / 4, e = t * t * (3 - 2 * t); s.push(A + (B - A) * e + (k ? (obRnd(m * 4 + k) - .5) * .5 * Math.min(1, Math.abs(B - A) / 2 + .3) : 0)); } }
+  s.push(OB.hires[11]); return s;
+})();
+const obLast = OB.hires.length - 3;                          // index window terakhir (Oct - Nov - Dec)
+const obVals = w => OB.series.slice(w * 4, w * 4 + 9);       // 9 titik per window: kiri .. tengah (spotlight) .. kanan (pudar)
+const obClamp = t => Math.min(1, Math.max(0, t));
+const obOut = t => 1 - Math.pow(1 - t, 4), obIO = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const obBack = t => 1 + 2.70158 * Math.pow(t - 1, 3) + 1.70158 * Math.pow(t - 1, 2);
+const obReduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ob = { w: 0, vals: [], pct: 0, raf: 0, entering: false, el: {} };
+
+function obInfo(w) {
+  const a = OB.hires[w], b = OB.hires[w + 1], d = b - a, n = Math.abs(d), up = d >= 0, pct = Math.round(n / a * 100), M = OB.months;
+  return { up, pct, m: [M[w], M[w + 1], M[w + 2]], text: d === 0
+    ? `Progress toward no change from ${M[w]} to ${M[w + 1]}: the number of new hires stayed the same`
+    : `Progress toward a ${pct}% ${up ? 'increase' : 'decrease'} from ${M[w]} to ${M[w + 1]}: the number of new hires ${up ? 'increased' : 'decreased'} by ${n} ${n === 1 ? 'person' : 'people'}` };
+}
+function obPaths(pts) {      // kurva halus (monotone cubic) lewat semua titik; garis gelap = titik 0-4, garis pudar = titik 4-8, tangen sama di titik tengah
+  const n = pts.length, dx = [], m = [], t = [], f = v => v.toFixed(1);
+  for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1][0] - pts[i][0]; m[i] = (pts[i + 1][1] - pts[i][1]) / dx[i]; }
+  t[0] = m[0]; t[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++) { if (m[i] === 0) { t[i] = t[i + 1] = 0; continue; }
+    const a = t[i] / m[i], b = t[i + 1] / m[i], s = a * a + b * b; if (s > 9) { const k = 3 / Math.sqrt(s); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; } }
+  const seg = (a, b) => { let d = `M${f(pts[a][0])} ${f(pts[a][1])}`;
+    for (let i = a; i < b; i++) { const h = dx[i] / 3; d += `C${f(pts[i][0] + h)} ${f(pts[i][1] + t[i] * h)} ${f(pts[i + 1][0] - h)} ${f(pts[i + 1][1] - t[i + 1] * h)} ${f(pts[i + 1][0])} ${f(pts[i + 1][1])}`; } return d; };
+  return { dark: seg(0, 4), light: seg(4, 8) };
+}
+function obGeom(vals) {      // gambar garis, bayangan hijau (hanya kiri -> tengah), dan posisi titik dari 9 nilai
+  const e = ob.el, pts = vals.map((v, i) => [OB.x0 + i * OB.dx / 4, OB.base - v * OB.U]), p = obPaths(pts);
+  e.dark.setAttribute('d', p.dark); e.light.setAttribute('d', p.light);
+  e.area.setAttribute('d', `${p.dark}L${pts[4][0]} ${OB.base}L${pts[0][0]} ${OB.base}Z`);
+  [0, 4, 8].forEach((i, k) => e.dots[k].setAttribute('cy', pts[i][1].toFixed(1))); e.halo.setAttribute('cy', pts[4][1].toFixed(1));
+}
+function obStatic(w) {       // isi teks & status tombol tanpa animasi
+  const e = ob.el, i = obInfo(w);
+  i.m.forEach((m, k) => { e.m[k].textContent = m; }); e.desc.textContent = i.text;
+  e.big.classList.toggle('up', i.up); e.big.classList.toggle('down', !i.up);
+  e.svg.setAttribute('aria-label', 'New hires per month: ' + i.m.map((m, k) => w + k < 11 ? `${m} ${OB.hires[w + k]}` : '').filter(Boolean).join(', '));
+  e.prev.disabled = w === 0; e.next.disabled = w === obLast;
+}
+function obFinishFx() {      // selesaikan efek animasi masuk (garis, bayangan, titik, garis putus-putus)
+  const e = ob.el; ob.entering = false;
+  e.dark.style.strokeDashoffset = 0; e.light.style.strokeDashoffset = 0; e.clipR.setAttribute('width', OB.W);
+  e.dots.forEach(d => d.setAttribute('r', 6)); e.halo.style.visibility = 'visible'; e.vl.forEach(l => l.setAttribute('y2', OB.base));
+}
+function playAnalytics() {   // animasi masuk: garis tergambar, bayangan hijau menyapu, titik membal, angka menghitung naik
+  const e = ob.el; if (!e.dark) return;
+  cancelAnimationFrame(ob.raf); clearTimeout(ob.swapT); e.m.concat(e.desc).forEach(el => el.getAnimations().forEach(a => a.cancel()));
+  ob.vals = obVals(ob.w); obGeom(ob.vals); obStatic(ob.w);
+  const info = obInfo(ob.w), R = obReduced(), t0 = performance.now() + 280, D = 1750, x4 = OB.x0 + OB.dx;
+  e.card.classList.remove('am-play'); void e.card.offsetWidth; if (!R) e.card.classList.add('am-play');
+  ob.entering = true;
+  const frame = now => {
+    const t = R ? 1 : obClamp((now - t0) / D), dk = obOut(obClamp(t / .55)), lt = obOut(obClamp((t - .42) / .5));
+    e.dark.style.strokeDashoffset = 1 - dk; e.light.style.strokeDashoffset = 1 - lt;
+    e.clipR.setAttribute('width', dk < 1 ? OB.x0 + (x4 - OB.x0) * dk : OB.W);
+    [t / .1, (t - .5) / .1, (t - .88) / .1].forEach((v, k) => e.dots[k].setAttribute('r', (6 * obBack(obClamp(v))).toFixed(2)));
+    e.halo.style.visibility = t > .55 ? 'visible' : 'hidden';
+    e.vl.forEach((l, k) => l.setAttribute('y2', OB.top + (OB.base - OB.top) * obOut(obClamp((t - k * .07) / .35))));
+    ob.pct = info.pct * obOut(obClamp((t - .12) / .72)); e.num.textContent = Math.round(ob.pct);
+    if (t < 1) ob.raf = requestAnimationFrame(frame); else obFinishFx();
+  };
+  ob.raf = requestAnimationFrame(frame);
+}
+function obGo(dir) {         // panah kiri/kanan: garis berubah bentuk (morph), angka menghitung ke nilai baru, teks bergeser
+  const nw = ob.w + dir; if (nw < 0 || nw > obLast) return;
+  if (ob.entering) obFinishFx();
+  cancelAnimationFrame(ob.raf); clearTimeout(ob.swapT);
+  const e = ob.el, from = ob.vals.slice(), to = obVals(nw), info = obInfo(nw), p0 = ob.pct, R = obReduced(), t0 = performance.now(), D = R ? 1 : 780;
+  ob.w = nw; e.prev.disabled = nw === 0; e.next.disabled = nw === obLast;
+  e.big.classList.toggle('up', info.up); e.big.classList.toggle('down', !info.up);
+  const els = e.m.concat(e.desc), apply = () => obStatic(nw);
+  if (R) apply();
+  else {
+    els.forEach(el => { el.getAnimations().forEach(a => a.cancel()); el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${-dir * 16}px)` }], { duration: 130, easing: 'ease-in', fill: 'forwards' }); });
+    ob.swapT = setTimeout(() => { apply(); els.forEach(el => { el.getAnimations().forEach(a => a.cancel());
+      el.animate([{ opacity: 0, transform: `translateX(${dir * 16}px)` }, { opacity: 1, transform: 'none' }], { duration: 340, easing: 'cubic-bezier(.2,.8,.2,1)' }); }); }, 130);
+  }
+  const frame = now => {
+    const t = obClamp((now - t0) / D), k = obIO(t);
+    ob.vals = from.map((v, i) => v + (to[i] - v) * k); obGeom(ob.vals);
+    ob.pct = p0 + (info.pct - p0) * k; e.num.textContent = Math.round(ob.pct);
+    if (t < 1) ob.raf = requestAnimationFrame(frame);
+  };
+  ob.raf = requestAnimationFrame(frame);
+}
+function buildAnalytics() {
+  const sec = document.createElement('section'); sec.className = 'page'; sec.id = 'page-analytics'; $('#page-assessments').after(sec);
+  const xs = [0, 4, 8].map(i => OB.x0 + i * OB.dx / 4);
+  sec.innerHTML = `<div class="card list-card"><div class="lc-head"><h2 class="lc-title">Analytics &amp; Hiring <span>Metrics</span></h2>
+    <div class="lc-tools"><button class="lc-btn is-on" data-tab>${ico('clipboard')}Assessments &amp; Tests</button><button class="lc-btn" data-tab>${ico('question')}Questions</button><button class="lc-btn">${ico('calendar')}Year${ico('chevron-down')}</button></div></div>
+    <div class="am-grid">
+      <section class="am-card" id="obCard" aria-label="On Boarding Metrics">
+        <h3 class="am-title">On Boarding Metrics</h3>
+        <div class="am-nav"><button id="obPrev" aria-label="Previous months">${ico('arrow-left')}</button><button id="obNext" aria-label="Next months">${ico('arrow-right')}</button></div>
+        <svg class="am-svg" id="obSvg" viewBox="0 0 ${OB.W} ${OB.H}" role="img">
+          <defs><linearGradient id="obFill" x1="0" y1="0" x2="0" y2="1"><stop class="am-stop" offset="0" stop-opacity=".42"/><stop class="am-stop" offset="1" stop-opacity="0"/></linearGradient>
+            <clipPath id="obClip"><rect id="obClipR" x="0" y="0" width="0" height="${OB.H}"/></clipPath></defs>
+          ${xs.map((x, k) => `<line class="am-vl" x1="${x}" x2="${x}" y1="${OB.top}" y2="${OB.top}"/>`).join('')}
+          <path id="obArea" fill="url(#obFill)" clip-path="url(#obClip)"/>
+          <path id="obLight" class="am-line l" pathLength="1"/><path id="obDark" class="am-line d" pathLength="1"/>
+          <circle id="obHalo" class="am-halo" cx="${xs[1]}" r="6"/>
+          ${xs.map((x, k) => `<circle class="am-dot ${k < 2 ? 'd' : 'l'}" cx="${x}" r="0"/>`).join('')}
+        </svg>
+        <div class="am-months"><span></span><span></span><span></span></div>
+        <div class="am-big up" id="obBig"><i class="am-tri"></i><span id="obNum">0</span>%</div>
+        <p class="am-desc" id="obDesc"></p>
+      </section>
+      <section class="am-card" aria-hidden="true"></section>
+    </div></div>`;
+  const q = s => sec.querySelector(s);
+  Object.assign(ob.el, { card: q('#obCard'), svg: q('#obSvg'), area: q('#obArea'), dark: q('#obDark'), light: q('#obLight'), clipR: q('#obClipR'), halo: q('#obHalo'),
+    dots: [...sec.querySelectorAll('.am-dot')], vl: [...sec.querySelectorAll('.am-vl')], m: [...sec.querySelectorAll('.am-months span')],
+    big: q('#obBig'), num: q('#obNum'), desc: q('#obDesc'), prev: q('#obPrev'), next: q('#obNext') });
+  ob.vals = obVals(0); obGeom(ob.vals); obStatic(0);
+  ob.el.prev.addEventListener('click', () => obGo(-1)); ob.el.next.addEventListener('click', () => obGo(1));
+  sec.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => sec.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('is-on', x === b))));
+  document.addEventListener('keydown', e => {      // panah keyboard kiri/kanan ganti bulan
+    if (current !== 'analytics' || !/^Arrow(Left|Right)$/.test(e.key) || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    obGo(e.key === 'ArrowRight' ? 1 : -1);
+  });
+}
+
 /* ===== ROUTER ===== */
-const PAGES = { dashboard: 'Dashboard', resume: "Candidate's Resume", jobs: 'Job Openings', interviews: 'Interviews & Schedule', assessments: 'Assessments & Tests' };
+const PAGES = { dashboard: 'Dashboard', resume: "Candidate's Resume", jobs: 'Job Openings', interviews: 'Interviews & Schedule', assessments: 'Assessments & Tests', analytics: 'Analytics & Hiring Metrics' };
 const ORDER = Object.keys(PAGES);
 let current = 'dashboard', busy = false;
 
@@ -393,6 +527,7 @@ function showPage(id, animate = true) {
     current = id; document.body.dataset.page = id; $('#crumbTitle').textContent = PAGES[id];
     document.querySelectorAll('.nav-item[data-page]').forEach(n => n.classList.toggle('active', n.dataset.page === id));
     if (id === 'dashboard') replayDashboard();
+    if (id === 'analytics') playAnalytics();
     busy = false; history.replaceState(null, '', '#' + id);
   };
   if (animate) { busy = true; prev.style.setProperty('--dy', 22 * dir + 'px'); prev.classList.add('leaving'); setTimeout(enter, 220); } else enter();
@@ -403,9 +538,10 @@ function refreshPage() {
   else if (current === 'interviews') renderInterviews();
   else if (current === 'jobs') renderJobs();
   else if (current === 'assessments') (asView === 'a' ? renderAssessments : renderQuestions)();
+  else if (current === 'analytics') playAnalytics();
 }
 
-buildPages(); buildAssess(); buildCreate(); bindInterviews(); bindDecision();
+buildPages(); buildAssess(); buildAnalytics(); buildCreate(); bindInterviews(); bindDecision();
 document.querySelectorAll('.nav-item[data-page]').forEach(n => n.addEventListener('click', () => showPage(n.dataset.page)));
 window.addEventListener('hashchange', () => showPage(location.hash.slice(1)));
 if (PAGES[location.hash.slice(1)]) showPage(location.hash.slice(1), false);
