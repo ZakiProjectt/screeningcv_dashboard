@@ -463,13 +463,96 @@ function obGo(dir) {         // panah kiri/kanan: garis berubah bentuk (morph), 
   };
   ob.raf = requestAnimationFrame(frame);
 }
+/* ===== ANALYTICS: Overall in 30 days · Top Performance · Top Applicant Countries ===== */
+SHARED.add('double-up'); SHARED.add('double-down');      // icon chevron ganda berwarna: assets/icons/double-up.svg (hijau), assets/icons/double-down.svg (merah)
+const OV_TICKS = 58;                                      // jumlah garis per bar
+const OV = [      // n = angka besar (counting), d = persen, dir = up|down|flat, fill = jumlah garis yang berwarna (dari 58)
+  { n: 74665, label: 'Resumes Received', d: 15, dir: 'up', fill: 52 },
+  { n: 72865, label: 'Rejected Resumes', d: 23, dir: 'up', fill: 38 },
+  { n: 1793, label: 'Resume on Hold', d: 7, dir: 'flat', fill: 4 },
+  { n: 7, label: 'Candidate Onboarding', d: 20, dir: 'down', fill: 1 },
+];
+const TP = [      // nilai tiap metrik: [nama, nilai, naik? 1 : turun 0]
+  { name: 'Team', total: 8.7, color: '#22d46a', rows: [['Goals', 8.9, 1], ['Collaborations', 8.5, 1], ['Productivity', 8.3, 1], ['Innovation', 8.7, 1], ['Efficiency', 8.8, 1], ['Alignment', 8.5, 1], ['Accountability', 8.3, 0], ['Responsiveness', 8.7, 1], ['Communication', 8.8, 1]] },
+  { name: 'Personal', total: 8.2, color: '#386be4', rows: [['Goals', 8.6, 1], ['Collaborations', 8.5, 1], ['Productivity', 8.1, 0], ['Innovation', 8.7, 1], ['Efficiency', 8.2, 0], ['Alignment', 8.3, 1], ['Accountability', 8.3, 0], ['Responsiveness', 8.5, 0], ['Communication', 8.7, 1]] },
+];
+const FLAG = c => `assets/flags/${c}.svg`;                 // bendera: assets/flags/<kode negara>.svg
+const CT = {      // [kode bendera, nama negara, persen bar]
+  World: [['us', 'United States', 91], ['ca', 'Canada', 83], ['cn', 'China', 79], ['jp', 'Japan', 73], ['gb', 'United Kingdom', 65], ['id', 'Indonesia', 53]],
+  America: [['us', 'United States', 91], ['ca', 'Canada', 83], ['mx', 'Mexico', 68], ['cr', 'Costa Rica', 54], ['ar', 'Argentina', 45], ['br', 'Brazil', 36]],
+  Europe: [['gb', 'United Kingdom', 75], ['de', 'Germany', 69], ['nl', 'Netherlands', 58], ['fr', 'France', 40], ['no', 'Norway', 29], ['dk', 'Denmark', 18]],
+  Asia: [['cn', 'China', 65], ['jp', 'Japan', 58], ['id', 'Indonesia', 51], ['sg', 'Singapore', 40], ['kr', 'South Korea', 29], ['hk', 'Hong Kong', 18]],
+  Africa: [['eg', 'Egypt', 29], ['ma', 'Morocco', 25], ['ng', 'Nigeria', 16], ['za', 'South Africa', 11], ['gh', 'Ghana', 6], ['tn', 'Tunisia', 2]],
+  Australia: [['au', 'Australia', 44], ['nz', 'New Zealand', 25], ['fj', 'Fiji', 16], ['ws', 'Samoa', 2]],
+};
+const ovCell = (d, k) => `<div class="ov-cell k${k}" style="--d:${(.35 + k * .12).toFixed(2)}s">
+  <div class="ov-bar">${Array.from({ length: OV_TICKS }, (_, i) => `<i${i < d.fill ? ' class="f"' : ''} style="--i:${i}"></i>`).join('')}</div>
+  <div class="ov-num"><span data-count="${d.n}">0</span></div>
+  <div class="ov-foot"><span>${d.label}</span><em class="ov-d ${d.dir}">${d.dir === 'flat' ? '<i class="ov-dash"></i>' : '<i class="ov-tri"></i>'}<span><span data-count="${d.d}">0</span>%</span></em></div></div>`;
+const tpRow = ([n, v, up], i) => `<div class="tp-row" style="--i:${i}"><span class="tp-l">${n}</span><b class="tp-v" data-v="${v}">0.0</b>${ico(up ? 'double-up' : 'double-down').replace('class="ico"', 'class="ico tp-i"')}</div>`;
+const tpGauge = (g, k) => `<div class="tp-g g${k}"><div class="tp-ring"><svg viewBox="0 0 266 266"><circle class="tp-track" cx="133" cy="133" r="116"/>
+  <circle class="tp-arc" cx="133" cy="133" r="116" pathLength="1" transform="rotate(-90 133 133)" style="stroke:${g.color}"/></svg>
+  <div class="tp-c"><b class="tp-n" data-v="${g.total}">0.0</b><span>${g.name}</span></div></div>
+  <div class="tp-list">${g.rows.map(tpRow).join('')}</div></div>`;
+
+const ct = { region: 'World', rows: [], t: 0 }, tp = { raf: 0 };
+function obRestart(el, settleMs) {      // putar ulang animasi CSS (class go) tanpa transisi mundur
+  clearTimeout(el._t); el.classList.add('reset'); el.classList.remove('go', 'settled'); void el.offsetWidth; el.classList.remove('reset');
+  requestAnimationFrame(() => { el.classList.add('go'); el._t = setTimeout(() => el.classList.add('settled'), settleMs); });
+}
+function playOverall() {      // garis bar muncul berurutan lalu terisi warna, angka & persen menghitung naik, garis pembatas tergambar
+  const card = $('#ovCard'); if (!card) return;
+  const nums = [...card.querySelectorAll('[data-count]')];
+  if (obReduced()) { nums.forEach(el => { el.textContent = fmt(+el.dataset.count); }); obRestart(card, 0); return; }
+  nums.forEach(el => { el.textContent = '0'; }); obRestart(card, 2800);
+  card.querySelectorAll('.ov-cell').forEach((c, k) => c.querySelectorAll('[data-count]').forEach((el, j) => countUp(el, j ? 1300 : 1800, 450 + k * 120 + (j ? 250 : 0))));
+}
+function playTop() {          // cincin terisi searah jarum jam, angka menghitung dari 0.0, baris metrik masuk berurutan
+  const card = $('#tpCard'); if (!card) return;
+  cancelAnimationFrame(tp.raf); obRestart(card, 3400);
+  const R = obReduced(), arcs = [...card.querySelectorAll('.tp-arc')], ns = [...card.querySelectorAll('.tp-n')], vs = [...card.querySelectorAll('.tp-v')];
+  const t0 = performance.now() + 450, END = t0 + 1600 + 250 + 9 * 70 + 1000;
+  const frame = now => {
+    const g = R ? 1 : obOut(obClamp((now - t0) / 1600));
+    arcs.forEach((a, k) => { a.style.strokeDashoffset = 1 - TP[k].total / 10 * g; });
+    ns.forEach((n, k) => { n.textContent = (TP[k].total * g).toFixed(1); });
+    vs.forEach((v, i) => { const q = R ? 1 : obOut(obClamp((now - t0 - 250 - (i % 9) * 70) / 1000)); v.textContent = (+v.dataset.v * q).toFixed(1); });
+    if (!R && now < END) tp.raf = requestAnimationFrame(frame);
+  };
+  tp.raf = requestAnimationFrame(frame);
+}
+function ctSet(region, mode) {      // mode: 0 langsung, 1 ganti benua (bar menyusut -> isi baru tumbuh), 2 animasi masuk halaman
+  const rows = ct.rows, list = CT[region], R = obReduced(); if (R) mode = 0;
+  ct.region = region; clearTimeout(ct.t);
+  const fill = () => {
+    rows.forEach((r, i) => { const d = list[i]; r.el.style.display = d ? '' : 'none'; if (!d) return;
+      r.img.classList.remove('ok'); r.img.src = FLAG(d[0]); r.el.title = `${d[1]}: ${d[2]}%`; r.fill.dataset.p = d[2] + '%';
+      r.fill.style.transition = 'none'; r.fill.style.width = '0%'; r.el.classList.remove('out'); });
+    void ct.list.offsetWidth;
+    rows.forEach((r, i) => { const d = list[i]; if (!d) return; r.fill.style.transition = ''; r.fill.style.transitionDelay = (mode === 2 ? .6 + i * .09 : mode ? .1 + i * .07 : 0) + 's'; r.fill.style.width = d[2] + '%'; });
+  };
+  if (mode === 1) { rows.forEach(r => { r.fill.style.transitionDelay = '0s'; r.fill.style.width = '0%'; r.el.classList.add('out'); }); ct.t = setTimeout(fill, 300); }
+  else fill();
+}
+function playCountries() { const card = $('#ctCard'); if (!card) return; obRestart(card, 2600); ctSet(ct.region, 2); }
+function playAnalyticsAll() {      // dipanggil saat halaman Analytics dibuka / tombol refresh
+  const g = $('#page-analytics .am-grid'); if (!g) return;
+  g.classList.remove('am-run'); void g.offsetWidth; if (!obReduced()) g.classList.add('am-run');
+  playAnalytics(); playOverall(); playTop(); playCountries();
+}
+function buildAnalyticsMore(sec) {
+  ct.list = sec.querySelector('#ctList');
+  ct.rows = [...ct.list.children].map(el => ({ el, img: el.querySelector('.flag'), fill: el.querySelector('.ct-fill') }));
+  bindDD('ctDd', v => ctSet(v || 'World', 1));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#ctDd').classList.remove('open'); });
+}
 function buildAnalytics() {
   const sec = document.createElement('section'); sec.className = 'page'; sec.id = 'page-analytics'; $('#page-assessments').after(sec);
   const xs = [0, 4, 8].map(i => OB.x0 + i * OB.dx / 4);
   sec.innerHTML = `<div class="card list-card"><div class="lc-head"><h2 class="lc-title">Analytics &amp; Hiring <span>Metrics</span></h2>
-    <div class="lc-tools"><button class="lc-btn is-on" data-tab>${ico('clipboard')}Assessments &amp; Tests</button><button class="lc-btn" data-tab>${ico('question')}Questions</button><button class="lc-btn">${ico('calendar')}Year${ico('chevron-down')}</button></div></div>
-    <div class="am-grid">
-      <section class="am-card" id="obCard" aria-label="On Boarding Metrics">
+    <div class="lc-tools"><button class="lc-btn">${ico('calendar')}Month${ico('chevron-down')}</button></div></div>
+    <div class="am-grid"><div class="am-row r1">
+      <section class="am-card" id="obCard" style="--cd:0s" aria-label="On Boarding Metrics">
         <h3 class="am-title">On Boarding Metrics</h3>
         <div class="am-nav"><button id="obPrev" aria-label="Previous months">${ico('arrow-left')}</button><button id="obNext" aria-label="Next months">${ico('arrow-right')}</button></div>
         <svg class="am-svg" id="obSvg" viewBox="0 0 ${OB.W} ${OB.H}" role="img">
@@ -485,19 +568,33 @@ function buildAnalytics() {
         <div class="am-big up" id="obBig"><i class="am-tri"></i><span id="obNum">0</span>%</div>
         <p class="am-desc" id="obDesc"></p>
       </section>
-      <section class="am-card" aria-hidden="true"></section>
-    </div></div>`;
+      <section class="am-card ov" id="ovCard" style="--cd:.08s" aria-label="Overall in 30 days">
+        <h3 class="am-title">Overall in 30 days</h3>
+        <div class="ov-body">${OV.map(ovCell).join('')}<i class="ov-vl"></i><i class="ov-hl"></i></div>
+      </section>
+    </div><div class="am-row r2">
+      <section class="am-card tp" id="tpCard" style="--cd:.16s" aria-label="Top Performance">
+        <h3 class="am-title">Top Performance</h3>
+        <div class="tp-right"><small>+8</small><span class="stack"><img class="avatar" src="assets/img/team-1.jpg" alt=""><img class="avatar" src="assets/img/team-2.jpg" alt=""><img class="avatar" src="assets/img/team-3.jpg" alt=""><img class="avatar" src="assets/img/team-4.jpg" alt=""></span><b class="tp-team">Human Resources Team</b></div>
+        ${TP.map(tpGauge).join('')}
+      </section>
+      <section class="am-card ct" id="ctCard" style="--cd:.24s" aria-label="Top Applicant Countries">
+        <h3 class="am-title">Top Applicant Countries</h3>
+        <div class="dd cn-dd" id="ctDd" data-label="World"><div class="dd-box"><button class="dd-btn" aria-haspopup="listbox"><span class="dd-label">World</span>${ico('arrow-up-right')}</button>${Object.keys(CT).map(r => `<button data-v="${r}">${r}</button>`).join('')}</div></div>
+        <div class="ct-list" id="ctList">${[0, 1, 2, 3, 4, 5].map(i => `<div class="ct-row" style="--i:${i}"><img class="flag" alt=""><div class="ct-track"><i class="ct-fill"></i></div></div>`).join('')}</div>
+      </section>
+    </div></div></div>`;
   const q = s => sec.querySelector(s);
   Object.assign(ob.el, { card: q('#obCard'), svg: q('#obSvg'), area: q('#obArea'), dark: q('#obDark'), light: q('#obLight'), clipR: q('#obClipR'), halo: q('#obHalo'),
     dots: [...sec.querySelectorAll('.am-dot')], vl: [...sec.querySelectorAll('.am-vl')], m: [...sec.querySelectorAll('.am-months span')],
     big: q('#obBig'), num: q('#obNum'), desc: q('#obDesc'), prev: q('#obPrev'), next: q('#obNext') });
   ob.vals = obVals(0); obGeom(ob.vals); obStatic(0);
   ob.el.prev.addEventListener('click', () => obGo(-1)); ob.el.next.addEventListener('click', () => obGo(1));
-  sec.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => sec.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('is-on', x === b))));
   document.addEventListener('keydown', e => {      // panah keyboard kiri/kanan ganti bulan
     if (current !== 'analytics' || !/^Arrow(Left|Right)$/.test(e.key) || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
     obGo(e.key === 'ArrowRight' ? 1 : -1);
   });
+  buildAnalyticsMore(sec);
 }
 
 /* ===== ROUTER ===== */
@@ -527,7 +624,7 @@ function showPage(id, animate = true) {
     current = id; document.body.dataset.page = id; $('#crumbTitle').textContent = PAGES[id];
     document.querySelectorAll('.nav-item[data-page]').forEach(n => n.classList.toggle('active', n.dataset.page === id));
     if (id === 'dashboard') replayDashboard();
-    if (id === 'analytics') playAnalytics();
+    if (id === 'analytics') playAnalyticsAll();
     busy = false; history.replaceState(null, '', '#' + id);
   };
   if (animate) { busy = true; prev.style.setProperty('--dy', 22 * dir + 'px'); prev.classList.add('leaving'); setTimeout(enter, 220); } else enter();
@@ -538,7 +635,7 @@ function refreshPage() {
   else if (current === 'interviews') renderInterviews();
   else if (current === 'jobs') renderJobs();
   else if (current === 'assessments') (asView === 'a' ? renderAssessments : renderQuestions)();
-  else if (current === 'analytics') playAnalytics();
+  else if (current === 'analytics') playAnalyticsAll();
 }
 
 buildPages(); buildAssess(); buildAnalytics(); buildCreate(); bindInterviews(); bindDecision();
