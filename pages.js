@@ -647,9 +647,23 @@ if (PAGES[location.hash.slice(1)]) showPage(location.hash.slice(1), false);
 const CLOCK = { tz: 'Asia/Jakarta', seconds: false };          // seconds:true -> "09.25.41 AM"; ganti tz kalau mau zona waktu lain
 const wibFmt = new Intl.DateTimeFormat('en-US', { timeZone: CLOCK.tz, weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
 const wib = () => Object.fromEntries(wibFmt.formatToParts(new Date()).filter(p => p.type !== 'literal').map(p => [p.type, p.value]));
+/* ===== WEEKLY TARGET: progress jam kerja real-time (WIB). Jam kerja diatur di WORK ===== */
+const WORK = { start: 9, end: 17 };                       // jam masuk & jam pulang (format 24 jam)
+let workLast = -1;
+function tickWork(t) {
+  const h24 = (+t.hour % 12) + (t.dayPeriod === 'PM' ? 12 : 0), now = h24 * 60 + +t.minute;
+  const s = WORK.start * 60, e = WORK.end * 60, total = e - s, done = Math.min(Math.max(now - s, 0), total);
+  if (done === workLast) return; workLast = done;          // update DOM hanya kalau menitnya berganti
+  const hr = Math.floor(done / 60), mn = done % 60, pct = done / total * 100;
+  $('#workTxt').textContent = `${hr} hour${hr === 1 ? '' : 's'} ${mn} minute${mn === 1 ? '' : 's'}`;
+  $('#workPct').textContent = Math.floor(pct) + '%';
+  const fill = $('#timeFill'); fill.dataset.w = pct.toFixed(2); fill.style.width = pct.toFixed(2) + '%';
+  [...$('#workMarks').children].forEach((m, k) => m.classList.toggle('on', now >= s + total * k / 2));   // Start / Break (tengah) / Finish menyala saat terlewati
+}
 function tickClock() {
   const t = wib(), el = $('.hello p'), html = `${t.weekday}, <b>${t.month} ${t.day} - ${t.hour}.${t.minute}${CLOCK.seconds ? '.' + t.second : ''} ${t.dayPeriod}</b>`;
   if (el.dataset.t !== html) { el.innerHTML = html; el.dataset.t = html; }      // hanya sentuh DOM kalau teksnya berubah
+  tickWork(t);
 }
 tickClock(); setInterval(tickClock, 1000);
 
