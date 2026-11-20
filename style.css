@@ -192,7 +192,7 @@ body.dark .b-grey{background:#2d322d}
 
 /* dark mode serentak + hover tidak ikut delay entrance */
 body.no-trans *,body.no-trans *::before,body.no-trans *::after{transition:none!important}
-body.ready *{transition-delay:0s!important}
+body.ready *:not(.am-card):not(.am-card *){transition-delay:0s!important}
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.28s}
 body.dark .dot.grey{background:#2d322d}
 
@@ -436,7 +436,7 @@ textarea.fi{display:block;height:276px;padding:22px 25px;resize:none;line-height
 .dc-opt:focus-visible,.dc-ch:focus-visible,.dc-x:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 
 /* ===== NOTES (sidebar, di bawah Add Notes) ===== */
-.notes{max-height:368px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--line) transparent;transition:margin .4s cubic-bezier(.2,.8,.2,1)}
+.notes{max-height:240px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--line) transparent;transition:margin .4s cubic-bezier(.2,.8,.2,1)}
 .notes.has{margin:-16px 0 24px}
 .note-w{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .42s cubic-bezier(.2,.8,.2,1),opacity .3s}
 .note-w.in{grid-template-rows:1fr;opacity:1}
@@ -513,7 +513,7 @@ body.dark .ov{--tk:#2f342f}
 .ov-cell.k0{--c:#2f6b35}.ov-cell.k1{--c:#f24a2b}.ov-cell.k2{--c:#d8aa06}.ov-cell.k3{--c:#1a4f9c}
 body.dark .ov-cell.k0{--c:#4fae5b}body.dark .ov-cell.k1{--c:#ff6a4d}body.dark .ov-cell.k2{--c:#e8b923}body.dark .ov-cell.k3{--c:#4f8cff}
 .ov-bar{display:flex;justify-content:space-between;height:32px}
-.ov-bar i{width:4px;height:100%;border-radius:1.5px;background:var(--tk);opacity:0;transform:scaleY(.12);transform-origin:bottom;transition:transform .55s cubic-bezier(.2,.9,.3,1.25) calc(var(--d) + var(--i)*11ms),opacity .3s calc(var(--d) + var(--i)*11ms),background-color .5s calc(var(--d) + var(--i)*11ms + .3s)}
+.ov-bar i{width:4px;height:100%;border-radius:1.5px;background:var(--tk);opacity:0;transform:scaleY(.12);transform-origin:bottom;transition:transform .55s cubic-bezier(.2,.9,.3,1.25) calc(var(--d) + var(--i)*14ms),opacity .3s calc(var(--d) + var(--i)*14ms),background-color .5s calc(var(--d) + var(--i)*14ms + .3s)}
 .ov.go .ov-bar i{opacity:1;transform:none}
 .ov.go .ov-bar i.f{background:var(--c)}
 .ov.settled .ov-bar i{transition:transform .25s,background-color .3s,opacity .3s}
@@ -575,3 +575,52 @@ body.dark .tp{--tpl:#7f867f;--tpt:#2f342f}
 .ct-fill{display:block;position:relative;height:100%;width:0;border-radius:9px;background:var(--lg);transition:width 1s cubic-bezier(.2,.8,.2,1),filter .25s}
 .ct-fill::after{content:attr(data-p);position:absolute;left:100%;top:50%;margin-left:10px;transform:translateY(-50%);font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap;opacity:0;transition:opacity .2s}
 .ct-row:hover .ct-fill{filter:brightness(1.12)}.ct-row:hover .ct-fill::after{opacity:1}
+
+/* ===== NAME TAG POPUP (klik profile di header) ===== */
+.profile{position:relative}
+.profile>.ico{transition:transform .45s cubic-bezier(.2,.9,.3,1.3)}
+.profile>.ico.flip{transform:rotate(180deg)}
+.profile>.ico.pop{animation:chevPop .35s cubic-bezier(.2,.9,.3,1.4)}
+@keyframes chevPop{from{opacity:.3;scale:.7;translate:0 -5px}}
+.profile .who{cursor:pointer}
+body.id-open .top{position:relative;z-index:70}
+.id-scrim{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.34);opacity:0;pointer-events:none;transition:opacity .35s}
+.id-scrim.show{opacity:1;pointer-events:auto}
+.id-pop{position:absolute;right:0;top:calc(100% + 16px);width:613px;height:312px;background:var(--card);border-radius:25px;box-shadow:0 24px 60px rgba(0,0,0,.18);opacity:0;pointer-events:none;transform-origin:calc(100% - 40px) 0;transform:translateY(-12px) scale(.9);transition:transform .5s cubic-bezier(.2,1.1,.3,1),opacity .25s}
+.profile.open .id-pop{opacity:1;pointer-events:auto;transform:none}
+.id-photo{position:absolute;left:33px;top:30px;width:149px;height:149px;border-radius:6px;object-fit:cover;background:var(--ph)}
+.id-role{position:absolute;left:33px;top:190px;width:149px;text-align:center;font-size:18px;line-height:22px;font-weight:600}
+.id-co{position:absolute;left:33px;top:255px;width:149px;text-align:center;font-size:15px;line-height:20px;color:var(--muted)}
+.id-info{position:absolute;left:227px;top:49px;right:70px}
+.id-info>div{display:flex;font-size:15px;line-height:27px}
+.id-info dt{width:117px;color:#9a9a9a;flex:none}
+.id-info dd{font-weight:500;white-space:nowrap}
+.id-info dd::before{content:":"}
+.id-qr{position:absolute;right:67px;bottom:30px;width:78px;height:78px;object-fit:contain;background:var(--ph);border-radius:3px}
+.id-x{position:absolute;top:32px;right:29px;width:32px;height:32px;border-radius:50%;transition:background .2s,transform .35s cubic-bezier(.2,.9,.3,1.2)}
+.id-x::before,.id-x::after{content:"";position:absolute;left:50%;top:50%;width:22px;height:2.6px;margin:-1.3px -11px;border-radius:2px;background:var(--ink);transform:rotate(45deg)}
+.id-x::after{transform:rotate(-45deg)}
+.id-x:hover{background:var(--soft);transform:rotate(90deg)}.id-x:active{transform:rotate(90deg) scale(.9)}
+.id-x:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.profile.open .id-photo,.profile.open .id-role,.profile.open .id-co,.profile.open .id-info>div,.profile.open .id-qr{animation:idIn .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.12s + var(--k,0)*60ms)}
+.profile.open .id-qr{animation-name:idQr}
+@keyframes idIn{from{opacity:0;transform:translateY(10px) scale(.96)}}
+@keyframes idQr{from{opacity:0;transform:scale(.55) rotate(-10deg)}}
+@media(prefers-reduced-motion:reduce){.id-pop{transition:opacity .2s}}
+
+/* ===== USER CARD DI BAWAH SIDEBAR ===== */
+.sidebar{position:relative}
+.me{position:absolute;left:31px;right:31px;bottom:32px}
+.me-line{display:block;height:1px;background:var(--line);margin-bottom:34px}
+.me-card{display:flex;align-items:center;gap:14px;height:65px;padding:0 14px 0 12px;border:1.5px solid #c4c4c4;border-radius:12px;background:var(--card);transition:background .25s}
+body.dark .me-card{border-color:var(--line)}
+.me-card:hover{background:var(--soft2)}
+.me-card .avatar{width:42px;height:42px;border-radius:7px}
+.me-card>div{flex:1;min-width:0;line-height:22px}
+.me-card b{display:block;font-size:18.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me-card small{display:block;font-size:14.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me-out{width:34px;height:34px;display:grid;place-items:center;flex:none;border-radius:8px;cursor:default}
+.me-out .ico{width:26px;height:26px}
+.app.collapsed .me{left:18px;right:18px}
+.app.collapsed .me-card{justify-content:center;padding:0;border-color:transparent}
+.app.collapsed .me-card>div,.app.collapsed .me-out{display:none}

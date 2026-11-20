@@ -504,7 +504,7 @@ function playOverall() {      // garis bar muncul berurutan lalu terisi warna, a
   const card = $('#ovCard'); if (!card) return;
   const nums = [...card.querySelectorAll('[data-count]')];
   if (obReduced()) { nums.forEach(el => { el.textContent = fmt(+el.dataset.count); }); obRestart(card, 0); return; }
-  nums.forEach(el => { el.textContent = '0'; }); obRestart(card, 2800);
+  nums.forEach(el => { el.textContent = '0'; }); obRestart(card, 3500);
   card.querySelectorAll('.ov-cell').forEach((c, k) => c.querySelectorAll('[data-count]').forEach((el, j) => countUp(el, j ? 1300 : 1800, 450 + k * 120 + (j ? 250 : 0))));
 }
 function playTop() {          // cincin terisi searah jarum jam, angka menghitung dari 0.0, baris metrik masuk berurutan
@@ -655,7 +655,7 @@ tickClock(); setInterval(tickClock, 1000);
 
 /* ===== NOTES (sidebar): Add Notes -> kartu hijau, bisa diketik, "/" untuk command, × untuk hapus, tersimpan di browser ===== */
 const NOTE_KEY = 'cvscreening.notes', NOTE_DEF = 'New Notes';
-const NOTE_MAX = 3, NOTE_H = { min: 172, max: 260 };      // maksimal jumlah catatan & rentang tinggi kartu (px); lewat batas tinggi -> teks scroll di dalam kartu
+const NOTE_MAX = 3, NOTE_H = { min: 172, max: 228 };      // maksimal jumlah catatan & rentang tinggi kartu (px); lewat batas tinggi -> teks scroll di dalam kartu
 const wibDate = t => `${t.day} ${t.month.slice(0, 3)} ${t.year}, ${t.hour}.${t.minute} ${t.dayPeriod} WIB`;
 const NOTE_CMD = [      // [label, teks yang disisipkan]
   ['Schedule', () => { const t = wib(); return `Schedule: ${t.weekday.slice(0, 3)}, ${wibDate(t)}`; }],
@@ -723,3 +723,43 @@ $('.add-notes').addEventListener('click', () => {
   const w = noteEl(n); notesBox.prepend(w); syncNotes(); void w.offsetWidth; w.classList.add('in'); notesBox.scrollTop = 0;
   setTimeout(() => w.querySelector('.note-b').focus({ preventScroll: true }), 420);
 });
+
+
+/* ===== NAME TAG (popup kartu identitas, muncul dari profile di header) + USER CARD & LOGOUT di bawah sidebar ===== */
+const ME = { name: 'Daniel O’Connor', title: 'Head of Human Resources', company: 'Company Name', work: 'Broadway, New York, USA', phone: '+1-112-998-220', join: '12/06/2015', email: 'daniel.oconnor@gmail.com',
+  photo: 'assets/img/daniel-hd.jpg', qr: 'assets/img/qr.png' };         // ganti data & path gambar di sini (QR: assets/img/qr.png)
+(function buildMe() {
+  const profile = $('.profile'), scrim = document.createElement('div'); scrim.className = 'id-scrim'; $('.app').append(scrim);
+  const rows = [['Name', ME.name], ['Place of Work', ME.work], ['Phone', ME.phone], ['Join Date', ME.join], ['Email', ME.email]];
+  const pop = document.createElement('div'); pop.className = 'id-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Name tag'); pop.setAttribute('aria-hidden', 'true');
+  pop.innerHTML = `<button class="id-x" aria-label="Close"></button>
+    <img class="id-photo" style="--k:0" src="${ME.photo}" alt=""><b class="id-role" style="--k:1">${ME.title}</b><span class="id-co" style="--k:2">${ME.company}</span>
+    <dl class="id-info">${rows.map(([k, v], i) => `<div style="--k:${i + 1}"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+    <img class="id-qr" style="--k:6" src="${ME.qr}" alt="">`;
+  profile.append(pop);
+  const who = profile.querySelector('.who'); who.setAttribute('role', 'button'); who.setAttribute('tabindex', '0'); who.setAttribute('aria-haspopup', 'dialog'); who.setAttribute('aria-expanded', 'false');
+  const chev = profile.querySelector(':scope > img.ico');      // chevron di profile: saat popup terbuka ganti ke icon chevron-up
+  chev.addEventListener('error', () => { if ((chev.getAttribute('src') || '').includes('chevron-up')) { chev.src = ICON('chevron-down'); chev.classList.add('flip'); } });   // file chevron-up belum ada -> putar chevron-down
+  const setChev = v => {
+    chev.classList.remove('flip', 'pop'); void chev.offsetWidth; chev.classList.add('pop');
+    chev.src = ICON(v ? 'chevron-up' : 'chevron-down'); if (document.body.classList.contains('dark')) applyIcons();
+  };
+  const open = v => {
+    setChev(v); profile.classList.toggle('open', v); scrim.classList.toggle('show', v); document.body.classList.toggle('id-open', v);
+    who.setAttribute('aria-expanded', v); pop.setAttribute('aria-hidden', !v);
+  };
+  profile.addEventListener('click', e => {
+    if (e.target.closest('.btn-outline, .bell')) return;
+    if (e.target.closest('.id-x')) return open(false);
+    if (e.target.closest('.id-pop')) return;
+    open(!profile.classList.contains('open'));
+  });
+  who.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(!profile.classList.contains('open')); } });
+  scrim.addEventListener('click', () => open(false));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && profile.classList.contains('open')) open(false); });
+
+  const me = document.createElement('div'); me.className = 'me';      // user card di dasar sidebar (tombol logout hanya tampilan, belum aktif)
+  me.innerHTML = `<i class="me-line"></i><div class="me-card"><img class="avatar" src="${ME.photo}" alt=""><div><b>${ME.name}</b><small>${ME.email}</small></div>
+    <button class="me-out" type="button" aria-label="Log out" aria-disabled="true" tabindex="-1">${ico('logout')}</button></div>`;
+  $('#sidebar').append(me);
+})();
